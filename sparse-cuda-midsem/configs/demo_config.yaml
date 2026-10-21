@@ -1,0 +1,24 @@
+project: SparseCUDA
+status: mid-sem prototype
+workload:
+  operation: dense-x-sparse SpMM / sparse Linear
+  dtype: float16
+  weights: static inference candidate
+sparsity:
+  pattern: 2-of-8 block sparsity
+  block_size: 32
+  status: primary candidate; subject to profiling
+kernel:
+  version: V0
+  mapping: one CTA per 16x16 output tile
+  accumulation: float32
+  tensor_core_path: planned
+benchmark:
+  warmup: 30
+  iterations: 200
+  timing: CUDA events
+  baselines:
+    - cuBLAS-backed dense matmul
+    - cuSPARSE CSR
+    - cuSPARSE BSR
+    - cuSPARSE Blocked-ELL

@@ -1,0 +1,63 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# C / C++ / CUDA build artifacts
+*.o
+*.obj
+*.dll
+*.dylib
+*.lib
+*.a
+*.exp
+*.ninja
+.ninja_*
+build/
+dist/
+*.egg-info/
+
+# Pytest / Test Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Profiling outputs (large raw traces)
+*.ncu-rep
+*.nsys-rep
+*.qdrep
+*.sqlite
+
+# Large Model Weights and Checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.ckpt
+
+# Environment / Secrets / Local
+.env
+.env.*
+venv/
+.venv/
+env/
+ENV/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System
+Thumbs.db
+.DS_Store
+
+# Agent / Scratch Metadata
+.agents/
+.gemini/
+scratch/

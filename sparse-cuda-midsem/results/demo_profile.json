@@ -1,0 +1,11 @@
+{
+  "is_demo": true,
+  "status": "candidate configuration",
+  "target_layer": "Linear Layer — candidate",
+  "matrix": {"M": 1024, "K": 1024},
+  "dtype": "FP16",
+  "block_size": "32x32",
+  "pattern": "2-of-8",
+  "block_sparsity": 0.75,
+  "note": "Replace with measurements from the real target model before making performance claims."
+}

@@ -1,0 +1,45 @@
+Component → Source File → Purpose → Verification
+
+SPARSE FORMAT
+  python/sparse_format.py          → 2-of-8 block-sparse pack/unpack (Packed2of8)        → tests/test_packer.py
+  python/__init__.py               → Re-exports pack/unpack functions                     → import python
+
+CUDA KERNEL
+  kernels/sparse_linear_v0.cu      → V0 correctness kernel (Y = X × W_sparse^T)          → tests/test_cuda_kernel.py
+
+PYTORCH INTEGRATION
+  csrc/sparse_op.cpp               → TORCH_LIBRARY registration (sparse_cuda.linear)      → import sparse_cuda_ext
+  csrc/sparse_op.h                 → C++ header for sparse_linear_cuda                    → build step
+
+BUILD
+  python/build_extension.py        → setuptools CUDAExtension build                       → python python/build_extension.py build_ext --inplace
+
+BENCHMARKS
+  bench/benchmark_dense.py         → Dense matmul (cuBLAS-backed) benchmark               → python bench/benchmark_dense.py
+  bench/benchmark_custom.py        → Custom CUDA kernel benchmark                         → python bench/benchmark_custom.py
+  bench/cusparse_spmm_baseline.cu  → cuSPARSE SpMM baseline (SCAFFOLD)                   → not yet runnable
+
+TESTS
+  tests/test_packer.py             → CPU pack/unpack correctness (2 tests)                → python -m pytest tests/test_packer.py
+  tests/test_cuda_kernel.py        → CUDA kernel correctness vs CPU reference             → python -m pytest tests/test_cuda_kernel.py
+
+SCRIPTS
+  scripts/check_environment.py     → Cross-platform environment diagnostic                → python scripts/check_environment.py
+  scripts/check_environment.ps1    → Windows PowerShell environment diagnostic            → powershell scripts/check_environment.ps1
+  scripts/check_cuda_env.sh        → Bash environment check (Linux/macOS only)            → bash scripts/check_cuda_env.sh
+
+CONFIGURATION
+  configs/demo_config.yaml         → Project configuration (candidate parameters)         → manual review
+
+DOCUMENTATION
+  docs/MIDSEM_EVIDENCE.md          → Maps presentation claims to implementation files     → manual review
+  docs/DEVELOPMENT_CHECKLIST.md    → Implementation status checklist                      → manual review
+  docs/PPT_CLAIM_GUARD.md          → Integrity rules for presentation claims              → manual review
+  docs/FILE_INDEX.txt              → This file                                            → manual review
+
+PROFILING
+  profiling/README.md              → Nsight Systems/Compute command templates              → manual review
+
+RESULTS
+  results/demo_profile.json        → DEMO/placeholder profile data (is_demo: true)        → NOT measured data
+  results/environment_current.txt  → STALE (from a different Linux machine)               → re-run check_environment.py

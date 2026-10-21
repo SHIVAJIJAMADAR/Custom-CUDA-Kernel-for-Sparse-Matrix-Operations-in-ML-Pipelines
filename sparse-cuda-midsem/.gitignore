@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.so
+*.o
+*.obj
+build/
+dist/
+*.egg-info/
+results/*.ncu-rep
+results/*.qdrep
+results/*.nsys-rep

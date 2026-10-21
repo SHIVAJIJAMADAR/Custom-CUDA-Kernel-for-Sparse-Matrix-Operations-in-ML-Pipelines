@@ -1,0 +1,53 @@
+# ==============================================================================
+# WARNING: PLACEHOLDER / SYNTHETIC DEMO CONFIGURATION ONLY
+# ==============================================================================
+# This configuration is a placeholder example for development scaffolding and
+# initial smoke-testing. It DOES NOT represent a verified production workload,
+# real model layer, or empirically measured sparsity distribution.
+#
+# Workload Selection Prerequisite (Required for Phase 2/3):
+# 1. Select a real ML model architecture (e.g., LLaMA-2/3, Mistral, BERT-base, ViT).
+# 2. Extract or simulate an actual linear projection layer (e.g., attention q_proj/k_proj
+#    or FFN gate_proj/up_proj with M=4096, K=4096 or M=11008, K=4096).
+# 3. Apply target pruning strategy (e.g., Wanda, SparseGPT, magnitude pruning) to
+#    generate the empirical sparsity mask.
+# 4. Profile using `python patterns/analyze_sparsity.py` to determine true row-skew
+#    and block occupancy before locking down final kernel tuning parameters.
+# ==============================================================================
+
+project: Custom-CUDA-Kernel-for-Sparse-Matrix-Operations-in-ML-Pipelines
+config_type: synthetic_demo_placeholder
+calibrated_from_real_workload: false
+
+# Synthetic Dimensions (Example Scaffolding Only)
+dimensions:
+  M: 1024
+  K: 1024
+  N: 128
+  dtype: float16
+
+workload:
+  target_model: "UNSELECTED (Placeholder: e.g., LLaMA-7B gate_proj)"
+  operation: "dense-x-sparse SpMM / SparseLinear forward pass"
+  weights: "synthetic_candidate"
+
+sparsity_scaffold:
+  target_sparsity: 0.75
+  pattern_type: "2-of-8 block sparsity (candidate study)"
+  block_size: 32
+  status: "synthetic_example; subject to workload profiling"
+
+kernel_scaffold:
+  preserved_midsem_kernel: "kernels/sparse_linear_v0.cu (V0 block-sparse)"
+  planned_primary_kernel: "kernels/csr_spmm_v1.cu (V1 row-per-warp CSR)"
+  accumulation: "float32"
+
+benchmark_protocol:
+  warmup_iterations: 30
+  measurement_iterations: 200
+  timing_method: "cudaEventRecord"
+  flush_l2_cache: true
+  l2_flush_buffer_mb: 4.0
+  baselines:
+    - "cuBLAS dense GEMM (torch.matmul)"
+    - "cuSPARSE CSR SpMM (cusparseSpMM)"
