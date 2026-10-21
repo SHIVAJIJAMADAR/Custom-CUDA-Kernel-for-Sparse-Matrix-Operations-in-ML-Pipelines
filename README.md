@@ -42,8 +42,8 @@ In modern deep learning architectures (e.g., Transformers, Large Language Models
 | **Sparsity Analysis** | Workload Profiling Tool | ✅ **Complete & Verified** | Density, block occupancy, skew metrics in `patterns/analyze_sparsity.py`. |
 | **Custom Kernel V0** | Preserved Block-Sparse Kernel | ⚠️ **Implemented, Unverified** | Preserved from mid-semester prototype; unverified on GPU. |
 | **Custom Kernel V1** | CSR Row-per-Warp SpMM | 📐 **Reconciled Architecture (Phase 2B)** | Column-Coalesced Mapping B specified; execution gated on environment. |
-| **Baselines** | cuBLAS & cuSPARSE Harvesters | ⚠️ **Implemented, Unverified** | Benchmarking harnesses written; execution blocked on GPU runtime. |
-| **GPU Execution** | Kernel Compilation & Timing | 🔴 **Readiness Gate Blocked** | Blocked on CUDA Toolkit 12.x and MSVC C++ Build Tools. |
+| **Baselines** | cuBLAS & cuSPARSE Harvesters | ✅ **Runtime Verified (Phase 2C.1)** | cuBLAS dense GEMM and cuSPARSE CSR SpMM verified on RTX 3050 in smoke tests. |
+| **GPU Execution** | Kernel Compilation & Timing | 🔴 **Readiness Gate Blocked** | PyTorch GPU runtime operational (Tests A, B, D pass); native custom kernel compilation (Tests C, E) blocked on CUDA Toolkit & MSVC. |
 
 > [!IMPORTANT]
 > **Performance Claim Guard:** No empirical GPU speedup claims are made at this stage. The preserved V0 CUDA kernel and V1 design have **not yet been executed on physical GPU hardware** because the local build toolchain is pending. The project strictly guards against fabricated performance numbers.
@@ -133,7 +133,7 @@ python -m pytest tests/ -v
 ```
 tests/test_cpu_reference.py::TestCPUReferenceMatmul::test_sparse_matmul_matches_dense[...] PASSED (7 tests)
 tests/test_cpu_reference.py::TestPackUnpackRoundtrip::test_roundtrip[...] PASSED (8 tests)
-tests/test_cuda_kernel.py::test_custom_cuda_matches_reference SKIPPED (CUDA unavailable)
+tests/test_cuda_kernel.py::test_custom_cuda_matches_reference SKIPPED (sparse_cuda_ext CUDA extension module is not compiled)
 tests/test_formats.py::TestCSRRoundtrip::test_roundtrip[...] PASSED (11 tests)
 tests/test_formats.py::TestCSRProperties::test_sparsity_calculation PASSED
 tests/test_formats.py::TestCSRProperties::test_row_ptr_shape PASSED
@@ -160,19 +160,31 @@ tests/test_workload.py::TestBERTDeterministicMasks::test_empty_rows_at_high_spar
 tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_csr_matches_dense_reference[...] PASSED (12 tests)
 tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_metadata_file_validity PASSED
 
-======================= 71 passed, 1 skipped in 13.24s =======================
+======================= 71 passed, 1 skipped in 13.02s =======================
 ```
+
+### GPU Environment Smoke-Test Suite (Tests A–E):
+Executes the official gated CUDA verification sequence:
+
+```bash
+python scripts/smoke_test_cuda.py
+```
+- **Test A (PyTorch GPU Init):** ✅ **PASSED** (`RTX 3050 Laptop GPU`, sm_86, 4096 MiB VRAM).
+- **Test B (Dense GPU Computation):** ✅ **PASSED** (FP32 & FP16 cuBLAS matmul vs CPU reference).
+- **Test C (Native CUDA Compilation):** 🔴 **BLOCKED** (Gated on `nvcc` & MSVC `cl.exe`).
+- **Test D (cuSPARSE Baseline Readiness):** ✅ **PASSED** (GPU CSR SpMM vs dense reference).
+- **Test E (Extension Toolchain Readiness):** 🔴 **BLOCKED** (Gated on `cl.exe`, `nvcc`, `CUDA_HOME`).
 
 ---
 
-## 5. Known Environment Blockers & Remediation
+## 5. Current Environment Status & Remaining Blockers
 
-GPU compilation and profiling are currently blocked on the local Windows 11 host:
-
-1. **CUDA Toolkit / `nvcc` Missing:** No CUDA compiler is present on the system.
-2. **MSVC `cl.exe` Missing:** Visual Studio 2022 C++ Build Tools are not installed (`nvcc` requires `cl.exe`).
-3. **PyTorch CPU Build:** Installed PyTorch is `2.10.0+cpu` (`torch.cuda.is_available() == False`).
-4. **Environment Variables Unset:** `CUDA_HOME` and `CUDA_PATH` are not configured.
+- **GPU Hardware & Driver:** NVIDIA GeForce RTX 3050 Laptop GPU (GA107, sm_86, Driver 566.07) — ✅ Operational.
+- **PyTorch CUDA Environment:** `torch==2.6.0+cu124` & `torchvision==0.21.0+cu124` in `.venv` — ✅ Operational.
+- **cuBLAS & cuSPARSE Backends:** Verified executing on GPU in Tests B & D — ✅ Operational.
+- **Native CUDA Compilation (nvcc):** 🔴 **BLOCKED** (Requires CUDA Toolkit 12.4.1 installation).
+- **Host C++ Compiler (MSVC cl.exe):** 🔴 **BLOCKED** (Requires VS 2022 C++ Build Tools v143).
+- **Compiler Environment Variables (`CUDA_HOME`):** 🔴 **BLOCKED** (Pending CUDA Toolkit install).
 
 A comprehensive, step-by-step resolution plan is provided in:  
 📄 **[`docs/ENVIRONMENT_SETUP.md`](docs/ENVIRONMENT_SETUP.md)**

@@ -20,7 +20,7 @@
 | **BERT Weight Properties & Verification** | 3 | 3 | 0 | 0 | ✅ Verified on CPU |
 | **BERT Deterministic Magnitude Masks** | 10 | 10 | 0 | 0 | ✅ Verified on CPU |
 | **BERT Workload Correctness Reference** | 13 | 13 | 0 | 0 | ✅ Verified on CPU |
-| **CUDA Kernel Execution (`test_cuda_kernel.py`)** | 1 | 0 | 1 | 0 | ⏸️ Correctly Skipped (No CUDA GPU) |
+| **CUDA Kernel Execution (`test_cuda_kernel.py`)** | 1 | 0 | 1 | 0 | ⏸️ Gracefully Skipped (V0 CUDA extension not compiled; pending native toolchain) |
 | **TOTAL** | **72** | **71** | **1** | **0** | **71 Passed, 1 Skipped** |
 
 > [!IMPORTANT]
@@ -124,18 +124,20 @@ The following benchmarks are scheduled for execution once the environment remedi
 
 ---
 
-## 4. Phase 2C CUDA Environment Readiness & Smoke-Test Ledger
+## 4. Phase 2C / 2C.1 CUDA Environment Readiness & Smoke-Test Ledger
 
-Executed on October 21, 2026, via `scripts/smoke_test_cuda.py`:
+Executed on October 21, 2026, via `scripts/smoke_test_cuda.py` inside `.venv` (PyTorch `2.6.0+cu124` on NVIDIA RTX 3050 Laptop GPU):
 
-| Test ID | Objective | Toolchain Prerequisite | Status | Empirical Diagnostic Finding |
-| :--- | :--- | :--- | :---: | :--- |
-| **Test A** | PyTorch GPU Initialization | `torch.cuda.is_available()` | 🔴 **BLOCKED** | PyTorch is `2.10.0+cpu` (CUDA build: `None`). CUDA-enabled wheel (`2.6.0+cu124`) required. |
-| **Test B** | Dense GPU Computation | cuBLAS / Tensor Core execution | 🔴 **BLOCKED** | Gated on Test A. Dense GEMM cannot execute without CUDA runtime. |
-| **Test C** | Native CUDA Compilation | `nvcc.exe` + MSVC `cl.exe` | 🔴 **BLOCKED** | `nvcc` and `cl.exe` not found in PATH. Standalone test ready in `scripts/smoke_test_native.cu`. |
-| **Test D** | cuSPARSE Baseline Readiness | cuSPARSE CSR SpMM on GPU | 🔴 **BLOCKED** | Gated on Test A. PyTorch CUDA CSR operations unavailable in CPU build. |
-| **Test E** | Extension Build Readiness | PyTorch `CUDAExtension` toolchain | 🔴 **BLOCKED** | `CUDA_HOME` unset; MSVC compiler `cl.exe` and `nvcc` missing. |
+| Test ID | Focus Area | Prerequisite Detected | Compilation Completed | Code Executed on GPU | Status | Empirical Diagnostic Finding |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Test A** | PyTorch GPU Initialization | ✅ YES | N/A (Pre-built wheel) | ✅ YES | ✅ **PASSED** | Initialized `NVIDIA GeForce RTX 3050 Laptop GPU` (sm_86, 4096 MiB VRAM). Allocated & verified 4 float32 elements on `cuda:0`. |
+| **Test B** | Dense GPU Computation | ✅ YES | N/A (cuBLAS runtime) | ✅ YES | ✅ **PASSED** | FP32 and FP16 dense GEMM ($128 \times 128$) executed on GPU; verified with `assert_close` vs CPU reference. |
+| **Test C** | Native CUDA Compilation | ❌ NO | ❌ NO | ❌ NO | 🔴 **BLOCKED** | Missing native compiler tools: `nvcc.exe` (CUDA Toolkit 12.4) and `cl.exe` (MSVC v143 / Visual Studio 2022). Standalone test verified ready in `scripts/smoke_test_native.cu`. |
+| **Test D** | cuSPARSE Baseline Readiness | ✅ YES | N/A (cuSPARSE runtime) | ✅ YES | ✅ **PASSED** | cuSPARSE CSR SpMM executed on GPU at 79.3% sparsity; `torch.matmul` and `torch.sparse.mm` verified vs dense reference. |
+| **Test E** | Extension Toolchain Readiness | ❌ NO | ❌ NO | ❌ NO | 🔴 **BLOCKED** | Blocked at prerequisite gate: `cl.exe` missing from PATH, `nvcc.exe` missing from PATH, and `CUDA_HOME` unset. Inline kernel test scaffold ready. |
 
-> [!NOTE]
-> All smoke tests are fully automated in `scripts/smoke_test_cuda.py`. As soon as Visual Studio 2022 C++ Build Tools and CUDA Toolkit 12.4 are installed, running `python scripts/smoke_test_cuda.py` inside the VS 2022 x64 Native Tools developer prompt will immediately validate all 5 gates.
+> [!IMPORTANT]
+> **Readiness Boundary Status:**
+> - **GPU Runtime Operations (Tests A, B, D):** Fully operational via PyTorch `2.6.0+cu124` on the physical RTX 3050 Laptop GPU.
+> - **Native CUDA Compilation Operations (Tests C, E):** Strictly gated on installing Visual Studio 2022 MSVC v143 build tools and CUDA Toolkit 12.4.1. No simulated pass is permitted.
 

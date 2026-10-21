@@ -18,8 +18,8 @@ An audit conducted on October 21, 2026, confirmed the following local hardware a
 | **Host Python** | `Python 3.13.0` (64-bit) | Python $\ge 3.10$ | ✅ Compatible |
 | **CUDA Toolkit / `nvcc`** | Not found in PATH or standard paths | CUDA Toolkit 12.4 (or 12.x) with `nvcc.exe` | 🔴 **CRITICAL BLOCKER 1** |
 | **Host C++ Compiler** | `cl.exe` missing | MSVC C++ Build Tools (VS 2022 v143 toolset) | 🔴 **CRITICAL BLOCKER 2** |
-| **PyTorch Distribution** | `2.10.0+cpu` (`torch.cuda.is_available() == False`) | PyTorch with CUDA 12.4 support (`torch 2.6.0+cu124`) | 🔴 **CRITICAL BLOCKER 3** |
-| **Environment Variables** | `CUDA_HOME`, `CUDA_PATH` unset | System environment variables pointing to CUDA directory | 🔴 **BLOCKER 4** |
+| **Environment Variables** | `CUDA_HOME`, `CUDA_PATH` unset | System environment variables pointing to CUDA directory | 🔴 **BLOCKER 3** |
+| **PyTorch Distribution** | `2.6.0+cu124` (`torch.cuda.is_available() == True`) | PyTorch with CUDA 12.4 support (`torch 2.6.0+cu124`) | ✅ **INSTALLED & VERIFIED IN .VENV** |
 | **Profiling Tools** | `ncu` / `nsys` missing | NVIDIA Nsight Compute & Nsight Systems | 🟡 **BLOCKER 5 (Required for R9/R11)** |
 | **Target ML Workload** | BERT-Base layer 0 intermediate dense weight `[3072, 768]` extracted & characterized (Phase 2A/2B) | Real model weight matrix or verified benchmark layer | ✅ **COMPLETE & VERIFIED** |
 
@@ -114,12 +114,16 @@ To preserve the global Python environment without modifying machine-wide package
    python -m pip install --upgrade pip
    ```
 
-2. **Install Pre-built CUDA 12.4 PyTorch Wheel (`cp313-win_amd64`) and Core Dev Dependencies:**
+2. **Install Pre-built CUDA 12.4 PyTorch Stack and Core Dev Dependencies:**
+   `requirements-dev.txt` contains the pinned, verified stack and explicit PyTorch index URL:
    ```powershell
-   pip install torch==2.6.0+cu124 torchvision --extra-index-url https://download.pytorch.org/whl/cu124
    pip install -r requirements-dev.txt
    ```
-   *(Note: If CUDA 12.6 is selected in Step 2, run `pip install torch==2.6.0+cu126 torchvision --extra-index-url https://download.pytorch.org/whl/cu126` instead).*
+   *Explicit equivalent command:*
+   ```powershell
+   pip install torch==2.6.0+cu124 torchvision==0.21.0+cu124 --extra-index-url https://download.pytorch.org/whl/cu124
+   ```
+   *(Note: If CUDA 12.6 is selected in Step 2, run `pip install torch==2.6.0+cu126 torchvision==0.21.0+cu126 --extra-index-url https://download.pytorch.org/whl/cu126` instead).*
 
 3. **Optional Workload Acquisition Dependencies:**
    If downloading or re-extracting model checkpoints from Hugging Face Hub, install the isolated workload dependencies:
@@ -137,11 +141,11 @@ python scripts/smoke_test_cuda.py
 ```
 
 This diagnostic script systematically verifies all 5 readiness gates:
-- **Test A — PyTorch GPU Initialization:** Detects device (`RTX 3050 Laptop`), compute capability (`8.6`), and allocates CUDA memory.
-- **Test B — Dense GPU Computation:** Runs cuBLAS dense GEMM and verifies output against CPU reference (`assert_close`).
-- **Test C — Native CUDA Compilation:** Compiles and executes `scripts/smoke_test_native.cu` using `nvcc` and MSVC.
-- **Test D — cuSPARSE Baseline Readiness:** Runs CSR SpMM via cuSPARSE on GPU and compares against dense reference.
-- **Test E — PyTorch Extension Build Readiness:** Verifies C++/CUDA inline compiler machinery and MSVC ABI compatibility.
+- **Test A — PyTorch GPU Initialization:** ✅ **PASSED** (Detects `NVIDIA GeForce RTX 3050 Laptop GPU`, compute capability `8.6`, allocates and verifies CUDA memory).
+- **Test B — Dense GPU Computation:** ✅ **PASSED** (Runs FP32 and FP16 cuBLAS dense GEMM and verifies output against CPU reference with `torch.testing.assert_close`).
+- **Test C — Native CUDA Compilation:** 🔴 **BLOCKED** (Gated on Step 1 MSVC `cl.exe` and Step 2 `nvcc.exe`; tests standalone vector addition in `scripts/smoke_test_native.cu`).
+- **Test D — cuSPARSE Baseline Readiness:** ✅ **PASSED** (Runs CSR SpMM via cuSPARSE on GPU with 80% sparsity, verifying `torch.matmul` and `torch.sparse.mm` vs dense reference).
+- **Test E — PyTorch Extension Build Readiness:** 🔴 **BLOCKED** (Gated on Step 1 `cl.exe`, Step 2 `nvcc.exe`, and `CUDA_HOME` environment variable).
 
 ---
 

@@ -19,7 +19,7 @@
 | **Host Python Environment** | Python $\ge 3.10$ | `[COMPLETE & VERIFIED]` | Python `3.13.0` (64-bit) active. |
 | **Visual Studio C++ Build Tools** | MSVC `cl.exe` | `[BLOCKED]` | Missing MSVC v143 toolset. Blocked pending user install. |
 | **NVIDIA CUDA Toolkit 12.x** | `nvcc` compiler | `[BLOCKED]` | Missing `nvcc.exe`. Blocked pending user install. |
-| **CUDA-Enabled PyTorch** | `torch.cuda.is_available()` | `[BLOCKED]` | Currently `2.10.0+cpu`. Blocked pending `cu124` wheel install. |
+| **CUDA-Enabled PyTorch** | `torch.cuda.is_available()` | `[COMPLETE & VERIFIED]` | `torch==2.6.0+cu124` & `torchvision==0.21.0+cu124` verified in `.venv`; device initialized & tensor allocation verified. |
 | **Environment Variables (`CUDA_PATH`)**| System PATH config | `[BLOCKED]` | Blocked on CUDA Toolkit installation. |
 | **Nsight Profiling Suite** | `ncu` / `nsys` | `[BLOCKED]` | Blocked on CUDA Toolkit / Nsight installation. |
 | **Python Isolation & Dependency Separation**| `.venv` & requirements isolation | `[COMPLETE & VERIFIED]` | `.venv` established; `requirements-workload.txt` isolated from `requirements-dev.txt`. |

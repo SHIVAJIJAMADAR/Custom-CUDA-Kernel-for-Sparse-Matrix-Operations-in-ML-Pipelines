@@ -1,6 +1,12 @@
 # Core Development & Test Suite Dependencies
-torch
+# Explicit extra index URL for CUDA 12.4 pre-built wheels on Windows x64:
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+# Pinned matched PyTorch & Torchvision pairing for CUDA 12.4 (Python 3.13):
+torch==2.6.0+cu124
+torchvision==0.21.0+cu124
+
+# Test and configuration dependencies:
 pytest
 pytest-asyncio
 pyyaml
-

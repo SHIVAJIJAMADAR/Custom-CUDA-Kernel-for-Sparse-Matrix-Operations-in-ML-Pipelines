@@ -6,7 +6,7 @@ from formats.blocked import pack_2of8_block_sparse, unpack_2of8_block_sparse
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA GPU required")
 def test_custom_cuda_matches_reference():
-    import sparse_cuda_ext  # noqa: F401
+    pytest.importorskip("sparse_cuda_ext", reason="sparse_cuda_ext CUDA extension module is not compiled")
 
     torch.manual_seed(11)
     B, M, K = 4, 32, 256
