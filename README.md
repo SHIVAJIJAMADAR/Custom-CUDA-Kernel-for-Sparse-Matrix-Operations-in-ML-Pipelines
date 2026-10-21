@@ -4,7 +4,7 @@
 [![CUDA Architecture](https://img.shields.io/badge/CUDA%20Compute-8.6%20(Ampere)-green.svg)](https://developer.nvidia.com/cuda-gpus)
 [![Tests Passing](https://img.shields.io/badge/tests-71%20passed%2C%201%20skipped-brightgreen.svg)]()
 
-Custom CUDA kernels for Sparse Matrix-Matrix Multiplication (SpMM) optimized for structured and unstructured sparsity patterns arising in deep learning inference pipelines. Evaluated rigorously against industry-standard baselines (**cuBLAS dense GEMM** and **cuSPARSE CSR SpMM**) on the NVIDIA Ampere architecture.
+Custom CUDA kernels for Sparse Matrix-Matrix Multiplication (SpMM) optimized for structured and unstructured sparsity patterns arising in deep learning inference pipelines. Designed for rigorous evaluation against industry-standard baselines (**cuBLAS dense GEMM** and **cuSPARSE CSR SpMM**) on the NVIDIA Ampere architecture (GPU execution and empirical benchmarking pending toolchain readiness).
 
 ---
 
@@ -56,7 +56,8 @@ In modern deep learning architectures (e.g., Transformers, Large Language Models
 Custom-CUDA-Kernel-for-Sparse-Matrix-Operations-in-ML-Pipelines/
 ├── README.md                      # Project overview, status, and reproduction guide
 ├── .gitignore                     # Git hygiene for Python, CUDA, VS, and build artifacts
-├── requirements-dev.txt           # Python development dependencies
+├── requirements-dev.txt           # Core Python development & test dependencies
+├── requirements-workload.txt      # Optional workload acquisition dependencies (HF Hub, safetensors)
 ├── conftest.py                    # Pytest configuration and sys.path setup
 ├── configs/
 │   └── demo_config.yaml           # Placeholder demo configuration (explicitly synthetic)
@@ -86,7 +87,9 @@ Custom-CUDA-Kernel-for-Sparse-Matrix-Operations-in-ML-Pipelines/
 ├── scripts/
 │   ├── check_environment.py       # Python environment inspector
 │   ├── check_environment.ps1      # PowerShell environment checker
-│   └── check_cuda_env.sh          # Linux/WSL environment checker
+│   ├── check_cuda_env.sh          # Linux/WSL environment checker
+│   ├── smoke_test_cuda.py         # Automated Phase 2C CUDA readiness & smoke tests (Tests A-E)
+│   └── smoke_test_native.cu       # Standalone native CUDA C++ kernel test (Test C)
 ├── profiling/
 │   └── README.md                  # Nsight Compute / Nsight Systems profiling guide
 ├── results/
@@ -176,11 +179,13 @@ A comprehensive, step-by-step resolution plan is provided in:
 
 ---
 
-## 6. Planned Implementation Milestones
+## 6. Implementation Milestones & Roadmap
 
-- **Phase 1 (Current):** Repository foundation, mid-semester code preservation, requirements traceability, and environment remediation plan.
-- **Phase 2:** Workload selection (real model layer profiling) and Custom Kernel V1 implementation (CSR Row-per-Warp SpMM with intra-warp shuffle reduction).
-- **Phase 3:** Custom Kernel V2 implementation (Tile-based Block-Sparse SpMM) and cuSPARSE baseline benchmarking.
-- **Phase 4:** Custom Kernel V3 implementation (Load-balanced CSR SpMM for skewed row distributions).
-- **Phase 5:** Systematic empirical benchmark sweeps (sparsity, dimension, skewness) and break-even analysis.
-- **Phase 6:** PyTorch `SparseLinear` layer integration, visual interactive demonstration, and final technical report.
+- **Phase 1 [Complete]:** Repository foundation, mid-semester code preservation, requirements traceability, and environment remediation plan.
+- **Phase 2A & 2B [Complete]:** Target workload acquisition (BERT-Base layer 0), empirical sparsity characterization, deterministic pruning masks, CPU correctness oracle, and V1 architecture reconciliation.
+- **Phase 2C [Current]:** CUDA development environment readiness, dependency isolation, toolchain compatibility audit, and GPU smoke-test suite (Tests A–E).
+- **Phase 3:** Custom Kernel V1 implementation (CSR Row-per-Warp SpMM) and cuSPARSE CSR baseline evaluation.
+- **Phase 4:** Custom Kernel V2 implementation (Tile-based Block-Sparse SpMM) and cuSPARSE BSR baseline.
+- **Phase 5:** Custom Kernel V3 implementation (Load-balanced CSR SpMM for skewed row distributions).
+- **Phase 6:** Systematic empirical benchmark sweeps (sparsity 50%–99%, dimension sweeps) and break-even analysis.
+- **Phase 7:** PyTorch `SparseLinear` layer integration, visual interactive demonstration, and final technical report.

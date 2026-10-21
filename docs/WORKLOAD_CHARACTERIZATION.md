@@ -144,7 +144,11 @@ To prevent unit tests from triggering unexpected external network downloads:
      ```bash
      python patterns/prepare_bert_workload.py
      ```
-   - Requires optional dependencies declared in `requirements-dev.txt`: `huggingface_hub>=0.20.0` and `safetensors>=0.4.0`.
+   - Requires optional dependencies declared in `requirements-workload.txt`:
+     ```bash
+     pip install -r requirements-workload.txt
+     ```
+     (`huggingface_hub>=0.20.0` and `safetensors>=0.4.0`).
 
 ---
 

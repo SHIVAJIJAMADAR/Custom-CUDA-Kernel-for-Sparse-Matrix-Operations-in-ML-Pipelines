@@ -121,3 +121,21 @@ The following benchmarks are scheduled for execution once the environment remedi
 | **EXP-05** | Custom V3 (Load-Balanced) on Skewed Row Distributions | Warp Divergence %, Tail Latency | `[BLOCKED on CUDA]` |
 | **EXP-06** | Break-Even Sparsity Crossover Analysis | Crossover Sparsity Threshold ($S^*$) | `[BLOCKED on CUDA]` |
 | **EXP-07** | End-to-End PyTorch SparseLinear Layer Forward Latency | Batch Latency ($ms$) | `[BLOCKED on CUDA]` |
+
+---
+
+## 4. Phase 2C CUDA Environment Readiness & Smoke-Test Ledger
+
+Executed on October 21, 2026, via `scripts/smoke_test_cuda.py`:
+
+| Test ID | Objective | Toolchain Prerequisite | Status | Empirical Diagnostic Finding |
+| :--- | :--- | :--- | :---: | :--- |
+| **Test A** | PyTorch GPU Initialization | `torch.cuda.is_available()` | 🔴 **BLOCKED** | PyTorch is `2.10.0+cpu` (CUDA build: `None`). CUDA-enabled wheel (`2.6.0+cu124`) required. |
+| **Test B** | Dense GPU Computation | cuBLAS / Tensor Core execution | 🔴 **BLOCKED** | Gated on Test A. Dense GEMM cannot execute without CUDA runtime. |
+| **Test C** | Native CUDA Compilation | `nvcc.exe` + MSVC `cl.exe` | 🔴 **BLOCKED** | `nvcc` and `cl.exe` not found in PATH. Standalone test ready in `scripts/smoke_test_native.cu`. |
+| **Test D** | cuSPARSE Baseline Readiness | cuSPARSE CSR SpMM on GPU | 🔴 **BLOCKED** | Gated on Test A. PyTorch CUDA CSR operations unavailable in CPU build. |
+| **Test E** | Extension Build Readiness | PyTorch `CUDAExtension` toolchain | 🔴 **BLOCKED** | `CUDA_HOME` unset; MSVC compiler `cl.exe` and `nvcc` missing. |
+
+> [!NOTE]
+> All smoke tests are fully automated in `scripts/smoke_test_cuda.py`. As soon as Visual Studio 2022 C++ Build Tools and CUDA Toolkit 12.4 are installed, running `python scripts/smoke_test_cuda.py` inside the VS 2022 x64 Native Tools developer prompt will immediately validate all 5 gates.
+

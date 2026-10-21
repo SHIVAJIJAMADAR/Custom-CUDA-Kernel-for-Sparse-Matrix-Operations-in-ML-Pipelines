@@ -21,7 +21,7 @@ An audit conducted on October 21, 2026, confirmed the following local hardware a
 | **PyTorch Distribution** | `2.10.0+cpu` (`torch.cuda.is_available() == False`) | PyTorch with CUDA 12.4 support (`torch 2.6.0+cu124`) | 🔴 **CRITICAL BLOCKER 3** |
 | **Environment Variables** | `CUDA_HOME`, `CUDA_PATH` unset | System environment variables pointing to CUDA directory | 🔴 **BLOCKER 4** |
 | **Profiling Tools** | `ncu` / `nsys` missing | NVIDIA Nsight Compute & Nsight Systems | 🟡 **BLOCKER 5 (Required for R9/R11)** |
-| **Target ML Workload** | Demo config (uncalibrated placeholder) | Real model weight matrix or verified benchmark layer | 🟡 **BLOCKER 6 (Required for R1)** |
+| **Target ML Workload** | BERT-Base layer 0 intermediate dense weight `[3072, 768]` extracted & characterized (Phase 2A/2B) | Real model weight matrix or verified benchmark layer | ✅ **COMPLETE & VERIFIED** |
 
 ---
 
@@ -43,11 +43,21 @@ The CUDA compiler `nvcc` requires Microsoft Visual C++ (`cl.exe`) to compile hos
      - *C++ CMake tools for Windows*
 3. Complete installation (requires $\sim 7\text{ GB}$ disk space).
 
-**Verification Command:**
-Open PowerShell and verify that `cl.exe` can be located:
-```powershell
-& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+**Verification:**
+> [!NOTE]
+> Running `vcvars64.bat` directly from an existing PowerShell session spawns a temporary child `cmd.exe` process that exits without mutating the parent PowerShell environment variables. Therefore, `cl.exe` will not be in `PATH` in that PowerShell session.
+>
+> **Recommended Method:** Open the **x64 Native Tools Command Prompt for VS 2022** from the Windows Start Menu (which initializes all compiler variables natively).
+>
+> If verifying from CMD or PowerShell:
+```cmd
+:: In Command Prompt:
+call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 cl.exe
+```
+```powershell
+# In PowerShell (invoking cl.exe via cmd wrapper):
+cmd.exe /c 'call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && cl.exe'
 ```
 *Expected Output:* `Microsoft (R) C/C++ Optimizing Compiler Version 19.4x... for x64`.
 
@@ -95,51 +105,53 @@ if ($oldPath -notlike "*$newEntries*") {
 
 ---
 
-### Step 4: Create Isolated Virtual Environment & Install CUDA-Enabled PyTorch
-To preserve the global Python environment without modifying machine-wide packages:
+### Step 4: Activate Isolated Virtual Environment & Install CUDA-Enabled PyTorch
+To preserve the global Python environment without modifying machine-wide packages, use the project `.venv`:
 
-1. **Create and Activate a Dedicated Virtual Environment:**
+1. **Activate the Project Virtual Environment:**
    ```powershell
-   python -m venv .venv
    .\.venv\Scripts\Activate.ps1
-   pip install --upgrade pip
+   python -m pip install --upgrade pip
    ```
 
-2. **Install Pre-built CUDA 12.4 PyTorch Wheel (`cp313-win_amd64`):**
+2. **Install Pre-built CUDA 12.4 PyTorch Wheel (`cp313-win_amd64`) and Core Dev Dependencies:**
    ```powershell
    pip install torch==2.6.0+cu124 torchvision --extra-index-url https://download.pytorch.org/whl/cu124
    pip install -r requirements-dev.txt
    ```
    *(Note: If CUDA 12.6 is selected in Step 2, run `pip install torch==2.6.0+cu126 torchvision --extra-index-url https://download.pytorch.org/whl/cu126` instead).*
 
-3. **Verify PyTorch GPU Initialization:**
+3. **Optional Workload Acquisition Dependencies:**
+   If downloading or re-extracting model checkpoints from Hugging Face Hub, install the isolated workload dependencies:
    ```powershell
-   python -c "import torch; print('PyTorch Version:', torch.__version__); print('CUDA Available:', torch.cuda.is_available()); print('Device Name:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'); print('Compute Capability:', torch.cuda.get_device_capability(0) if torch.cuda.is_available() else 'N/A')"
-   ```
-   *Expected Output:*
-   ```
-   PyTorch Version: 2.6.0+cu124
-   CUDA Available: True
-   Device Name: NVIDIA GeForce RTX 3050 Laptop GPU
-   Compute Capability: (8, 6)
+   pip install -r requirements-workload.txt
    ```
 
 ---
 
-### Step 5: Verify cuBLAS & GPU Dense GEMM Acceleration
-Verify that standard PyTorch GPU tensor math and dense operations execute on the RTX 3050 without error:
+### Step 5: Run the Official CUDA Smoke-Test Sequence (Tests A–E)
+Execute the comprehensive diagnostic and validation harness:
 
 ```powershell
-python -c "import torch; a = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); b = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); c = torch.matmul(a, b); print('Dense GEMM Succeeded! Result shape:', c.shape)"
+python scripts/smoke_test_cuda.py
 ```
+
+This diagnostic script systematically verifies all 5 readiness gates:
+- **Test A — PyTorch GPU Initialization:** Detects device (`RTX 3050 Laptop`), compute capability (`8.6`), and allocates CUDA memory.
+- **Test B — Dense GPU Computation:** Runs cuBLAS dense GEMM and verifies output against CPU reference (`assert_close`).
+- **Test C — Native CUDA Compilation:** Compiles and executes `scripts/smoke_test_native.cu` using `nvcc` and MSVC.
+- **Test D — cuSPARSE Baseline Readiness:** Runs CSR SpMM via cuSPARSE on GPU and compares against dense reference.
+- **Test E — PyTorch Extension Build Readiness:** Verifies C++/CUDA inline compiler machinery and MSVC ABI compatibility.
 
 ---
 
 ### Step 6: Build the PyTorch C++/CUDA Extension in Developer Shell
-When compiling custom CUDA extensions via PyTorch's `CUDAExtension`, execute within the MSVC x64 developer environment so `cl.exe` is in PATH:
+When compiling custom CUDA extensions via PyTorch's `CUDAExtension`, execute within the **x64 Native Tools Command Prompt for VS 2022** so that `cl.exe`, `INCLUDE`, `LIB`, and `CUDA_HOME` are natively initialized:
 
-```powershell
-& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+```cmd
+:: Open "x64 Native Tools Command Prompt for VS 2022" from Start Menu
+cd C:\Users\nikit\OneDrive\Desktop\EDI_CUDA
+call .venv\Scripts\activate.bat
 python python/build_extension.py
 ```
 *Verification:* Inspect generated `.pyd` module in `csrc/` or site-packages.

@@ -19,9 +19,11 @@
 | **Host Python Environment** | Python $\ge 3.10$ | `[COMPLETE & VERIFIED]` | Python `3.13.0` (64-bit) active. |
 | **Visual Studio C++ Build Tools** | MSVC `cl.exe` | `[BLOCKED]` | Missing MSVC v143 toolset. Blocked pending user install. |
 | **NVIDIA CUDA Toolkit 12.x** | `nvcc` compiler | `[BLOCKED]` | Missing `nvcc.exe`. Blocked pending user install. |
-| **CUDA-Enabled PyTorch** | `torch.cuda.is_available()` | `[BLOCKED]` | Currently `2.10.0+cpu`. Blocked pending `cu124` install. |
+| **CUDA-Enabled PyTorch** | `torch.cuda.is_available()` | `[BLOCKED]` | Currently `2.10.0+cpu`. Blocked pending `cu124` wheel install. |
 | **Environment Variables (`CUDA_PATH`)**| System PATH config | `[BLOCKED]` | Blocked on CUDA Toolkit installation. |
 | **Nsight Profiling Suite** | `ncu` / `nsys` | `[BLOCKED]` | Blocked on CUDA Toolkit / Nsight installation. |
+| **Python Isolation & Dependency Separation**| `.venv` & requirements isolation | `[COMPLETE & VERIFIED]` | `.venv` established; `requirements-workload.txt` isolated from `requirements-dev.txt`. |
+| **CUDA Smoke-Test Suite (Tests A–E)** | Gated diagnostic harness | `[COMPLETE & VERIFIED]` | `scripts/smoke_test_cuda.py` and `scripts/smoke_test_native.cu` implemented and audited. |
 | **Git Repository & Remote Link** | GitHub synchronization | `[COMPLETE & VERIFIED]` | Local git initialized on `main`, tracking remote `origin/main`. |
 | **Root Cleanliness & .gitignore** | Build artifact hygiene | `[COMPLETE & VERIFIED]` | Root `.gitignore` configured for Python, CUDA, VS, and OS. |
 
