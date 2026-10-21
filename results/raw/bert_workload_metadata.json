@@ -103,8 +103,9 @@
   },
   "pruning_methodology": {
     "method": "deterministic_global_magnitude_pruning",
-    "retention_policy": "Retain elements with |A_ij| >= threshold",
-    "tie_breaking": "Deterministic by flattened tensor index",
+    "retention_policy": "Retain exact top-k elements with largest absolute magnitude |A_ij|, breaking ties by smaller flattened row-major index via stable sort",
+    "tie_breaking": "Deterministic by smaller flattened row-major index via torch.sort(stable=True)",
+    "k_retention_formula": "k = round(total_elements * (1.0 - target_sparsity))",
     "official_sweep_levels": [
       "50%",
       "60%",

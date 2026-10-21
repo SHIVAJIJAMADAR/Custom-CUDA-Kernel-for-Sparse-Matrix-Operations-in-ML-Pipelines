@@ -34,7 +34,7 @@
 | **Real Target Workload Selection** | R1.1 | `[COMPLETE & VERIFIED]` | BERT-Base `bert.encoder.layer.0.intermediate.dense.weight` [3072, 768] extracted from rev `86b5e093`. |
 | **Workload Sparsity Characterization** | R1.1 | `[COMPLETE & VERIFIED]` | Confirmed 0.00% native sparsity; full block and row statistics in `docs/WORKLOAD_CHARACTERIZATION.md`. |
 | **Deterministic Magnitude Mask Generation** | R1.1 | `[COMPLETE & VERIFIED]` | Official sweep (50%–99%) generated via `patterns/prepare_bert_workload.py`; metadata saved in `results/raw/`. |
-| **Workload Unit Tests & Oracle Validation** | R7.1 | `[COMPLETE & VERIFIED]` | 26 unit tests passing in `tests/test_workload.py` ($A_{\text{masked}} \times X$ reference). |
+| **Workload Unit Tests & Oracle Validation** | R7.1 | `[COMPLETE & VERIFIED]` | 31 tests passing in `tests/test_workload.py` (5 lightweight unit tests + 26 BERT integration tests). |
 | **Workload Placeholder Configuration** | R1.1 | `[COMPLETE & VERIFIED]` | `configs/demo_config.yaml` explicitly marked as synthetic example. |
 | **Sparsity Characterization Script** | R1.2 | `[COMPLETE & VERIFIED]` | `patterns/analyze_sparsity.py` implements density, skew, & block analysis. |
 | **Row-Length Statistics & Distribution**| R1.2 | `[COMPLETE & VERIFIED]` | Mean, std, skewness, min, max, median implemented and tested. |
@@ -71,9 +71,9 @@
 | **V0 Block-Sparse Kernel (Preserved)**| Legacy | `[IMPLEMENTED BUT UNVERIFIED]`| `kernels/sparse_linear_v0.cu` preserved; unverified on GPU. |
 | **V0 Kernel PyTorch Extension Build** | R10.1 | `[BLOCKED]` | `python/build_extension.py` blocked on MSVC `cl.exe` + `nvcc`. |
 | **V0 Kernel Test (`test_cuda_kernel`)**| Legacy | `[BLOCKED]` | Test skipped on CPU: `tests/test_cuda_kernel.py`. |
-| **V1 CSR Row-per-Warp Kernel Design** | R4 | `[COMPLETE & VERIFIED]` | Thread-to-data mapping & algorithm fully documented (Phase 2). |
+| **V1 CSR SpMM Architecture Reconciliation** | R4 | `[COMPLETE & VERIFIED]` | Reconciled Mapping A vs Mapping B; documented in `docs/ARCHITECTURE.md`. |
 | **V1 CSR Kernel Implementation & Run**| R4.1 | `[BLOCKED / READINESS GATED]` | Execution strictly gated until host CUDA/MSVC toolchain is installed. |
-| **V1 Intra-Warp Shuffle Reduction** | R4.2 | `[COMPLETE & VERIFIED]` | Algorithmic shuffle reduction designed; implementation gated on environment. |
+| **V1 Memory Coalescing & Reduction Strategy**| R4.2, R4.3| `[COMPLETE & VERIFIED]` | Mapping B achieves 100% coalesced 128-byte transactions without warp reduction. |
 | **V2 Block-Sparse Tiled Kernel** | R5 | `[NOT STARTED]` | Implementation scheduled for Phase 3. |
 | **V3 Load-Balanced Skewed-Row Kernel**| R6 | `[NOT STARTED]` | Implementation scheduled for Phase 4. |
 

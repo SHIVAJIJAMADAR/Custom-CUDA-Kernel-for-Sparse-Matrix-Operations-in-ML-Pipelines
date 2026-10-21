@@ -92,11 +92,18 @@ def generate_magnitude_mask(weight: torch.Tensor, target_sparsity: float) -> tup
     """Generate deterministic global magnitude pruning mask.
 
     Retention policy:
-      Retain elements with absolute magnitude in the top (1 - target_sparsity) fraction.
-      Ties at the exact threshold boundary are broken deterministically by index order.
+      Retain exact top-k elements with largest absolute magnitude |A_ij|, where:
+        k = round(total_elements * (1.0 - target_sparsity))
+      Ties at the retention boundary (|A_i| == |A_j|) are broken deterministically
+      by prioritizing elements with the smaller flattened row-major tensor index.
+      This is implemented via a stable sort (torch.sort with stable=True).
+
+    Args:
+      weight: 2D dense weight tensor.
+      target_sparsity: Desired sparsity fraction in [0.0, 1.0).
 
     Returns:
-      (binary_mask [M, K] (bool), actual_threshold (float), nonzero_count (int))
+      (binary_mask [M, K] (bool), actual_threshold (float), retained_count (int))
     """
     if not (0.0 <= target_sparsity < 1.0):
         raise ValueError(f"Target sparsity must be in [0.0, 1.0), got {target_sparsity}")
@@ -110,7 +117,9 @@ def generate_magnitude_mask(weight: torch.Tensor, target_sparsity: float) -> tup
         return torch.ones_like(weight, dtype=torch.bool), 0.0, total_elements
 
     flat_abs = torch.abs(weight.flatten())
-    sorted_vals, sorted_indices = torch.sort(flat_abs, descending=True)
+    # stable=True guarantees that elements with identical magnitude preserve
+    # their original relative order (i.e. smaller flattened row-major index first).
+    sorted_vals, sorted_indices = torch.sort(flat_abs, descending=True, stable=True)
     threshold = float(sorted_vals[k_retain - 1].item())
 
     # Build mask deterministically using exact top-k indices
@@ -119,8 +128,7 @@ def generate_magnitude_mask(weight: torch.Tensor, target_sparsity: float) -> tup
     flat_mask[topk_indices] = True
     mask = flat_mask.view_as(weight)
 
-    nnz = int(mask.sum().item())
-    return mask, threshold, nnz
+    return mask, threshold, k_retain
 
 
 def characterize_workload_and_masks(
@@ -213,8 +221,9 @@ def characterize_workload_and_masks(
         },
         "pruning_methodology": {
             "method": "deterministic_global_magnitude_pruning",
-            "retention_policy": "Retain elements with |A_ij| >= threshold",
-            "tie_breaking": "Deterministic by flattened tensor index",
+            "retention_policy": "Retain exact top-k elements with largest absolute magnitude |A_ij|, breaking ties by smaller flattened row-major index via stable sort",
+            "tie_breaking": "Deterministic by smaller flattened row-major index via torch.sort(stable=True)",
+            "k_retention_formula": "k = round(total_elements * (1.0 - target_sparsity))",
             "official_sweep_levels": [f"{int(s * 100)}%" for s in OFFICIAL_SPARSITY_SWEEP],
         },
         "experimental_sparsity_sweep": sweep_results,

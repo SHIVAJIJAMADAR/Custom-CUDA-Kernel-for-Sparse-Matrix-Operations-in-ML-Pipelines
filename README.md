@@ -2,7 +2,7 @@
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
 [![CUDA Architecture](https://img.shields.io/badge/CUDA%20Compute-8.6%20(Ampere)-green.svg)](https://developer.nvidia.com/cuda-gpus)
-[![Tests Passing](https://img.shields.io/badge/tests-66%20passed%2C%201%20skipped-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-71%20passed%2C%201%20skipped-brightgreen.svg)]()
 
 Custom CUDA kernels for Sparse Matrix-Matrix Multiplication (SpMM) optimized for structured and unstructured sparsity patterns arising in deep learning inference pipelines. Evaluated rigorously against industry-standard baselines (**cuBLAS dense GEMM** and **cuSPARSE CSR SpMM**) on the NVIDIA Ampere architecture.
 
@@ -21,7 +21,7 @@ In modern deep learning architectures (e.g., Transformers, Large Language Models
    - Baseline 3: Naive custom sparse kernel
    - Baseline 4: Optimized custom sparse kernel
 4. **Custom Kernel Ladder:**
-   - **V1 (Core Required):** CSR Row-per-Warp SpMM with intra-warp shuffle reduction (`__shfl_down_sync`).
+   - **V1 (Core Required):** CSR Row-per-Warp SpMM with reconciled memory coalescing (Column-Coalesced Mapping B).
    - **V2 (Workload-Dependent):** Tile-based Block-Sparse SpMM using on-chip shared memory.
    - **V3 (Workload-Dependent):** Load-balanced SpMM mitigating warp divergence on skewed row distributions.
    - *Preserved Mid-Sem:* V0 block-sparse prototype remains distinctly labeled and archived.
@@ -36,12 +36,12 @@ In modern deep learning architectures (e.g., Transformers, Large Language Models
 | Milestone | Component | Status | Description |
 | :--- | :--- | :--- | :--- |
 | **Foundation** | Git Repository & Layout | ✅ **Complete & Verified** | Synchronized with GitHub remote; target layout established. |
-| **Target Workload** | Real Model Weight Matrix | ✅ **Acquired & Profiled (Phase 2A)** | BERT-Base [3072, 768] extracted, 0% native sparsity; 50%–99% sweep in `docs/WORKLOAD_CHARACTERIZATION.md`. |
+| **Target Workload** | Real Model Weight Matrix | ✅ **Acquired & Profiled (Phase 2A & 2B)** | BERT-Base [3072, 768] extracted, 0% native sparsity; 50%–99% sweep in `docs/WORKLOAD_CHARACTERIZATION.md`. |
 | **Formats** | CSR Converter & Block-Sparse | ✅ **Complete & Verified** | Bidirectional converters, row-length analysis, and 2-of-8 packing. |
-| **Correctness** | Masked-Dense Oracle | ✅ **Complete & Verified** | 66 unit tests passing on CPU (66 passed, 1 skipped). |
+| **Correctness** | Masked-Dense Oracle & Unit Tests | ✅ **Complete & Verified** | 71 tests passing on CPU (71 passed, 1 skipped). |
 | **Sparsity Analysis** | Workload Profiling Tool | ✅ **Complete & Verified** | Density, block occupancy, skew metrics in `patterns/analyze_sparsity.py`. |
 | **Custom Kernel V0** | Preserved Block-Sparse Kernel | ⚠️ **Implemented, Unverified** | Preserved from mid-semester prototype; unverified on GPU. |
-| **Custom Kernel V1** | CSR Row-per-Warp SpMM | 📐 **Designed (Phase 2)** | Full thread-to-data mapping specified; execution gated on environment. |
+| **Custom Kernel V1** | CSR Row-per-Warp SpMM | 📐 **Reconciled Architecture (Phase 2B)** | Column-Coalesced Mapping B specified; execution gated on environment. |
 | **Baselines** | cuBLAS & cuSPARSE Harvesters | ⚠️ **Implemented, Unverified** | Benchmarking harnesses written; execution blocked on GPU runtime. |
 | **GPU Execution** | Kernel Compilation & Timing | 🔴 **Readiness Gate Blocked** | Blocked on CUDA Toolkit 12.x and MSVC C++ Build Tools. |
 
@@ -110,10 +110,17 @@ All data structures, format conversions, mathematical references, and test oracl
 
 ### Prerequisites:
 - Python 3.10+ (tested on Python 3.13.0 64-bit)
-- `pytest`, `torch`, `numpy`, `scipy`
+- Dependencies: `pytest`, `torch`, `pyyaml` (install via `pip install -r requirements-dev.txt`)
 
-### Reproduction Command:
-Run the complete test suite from the repository root:
+### Fast Unit Tests (No Model Checkpoint Required):
+Runs all unit tests (format converters, CPU reference matmul, 2-of-8 block packing, and synthetic magnitude pruning tie-breaking) in $< 3$ seconds:
+
+```bash
+python -m pytest tests/ -m "not workload" -v
+```
+
+### Complete Test Suite (Including BERT Workload):
+Executes all 72 tests (including BERT layer-0 intermediate weight validation and golden masked-dense reference checks):
 
 ```bash
 python -m pytest tests/ -v
@@ -136,6 +143,11 @@ tests/test_formats.py::TestCorrectnessOracle::test_csr_matmul_matches_dense_orac
 tests/test_formats.py::TestCorrectnessOracle::test_threshold_based_sparsity PASSED
 tests/test_packer.py::test_pack_unpack_has_expected_structure PASSED
 tests/test_packer.py::test_top2_selection_is_by_block_norm PASSED
+tests/test_workload.py::TestMagnitudePruningUnit::test_exact_topk_retention_count PASSED
+tests/test_workload.py::TestMagnitudePruningUnit::test_deterministic_tie_breaking_by_flattened_index PASSED
+tests/test_workload.py::TestMagnitudePruningUnit::test_signed_magnitude_pruning PASSED
+tests/test_workload.py::TestMagnitudePruningUnit::test_boundary_and_zero_sparsity PASSED
+tests/test_workload.py::TestMagnitudePruningUnit::test_input_with_existing_zeros PASSED
 tests/test_workload.py::TestBERTWeightProperties::test_tensor_shape_and_dtype PASSED
 tests/test_workload.py::TestBERTWeightProperties::test_tensor_finite_and_statistics PASSED
 tests/test_workload.py::TestBERTWeightProperties::test_native_sparsity_is_zero PASSED
@@ -145,7 +157,7 @@ tests/test_workload.py::TestBERTDeterministicMasks::test_empty_rows_at_high_spar
 tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_csr_matches_dense_reference[...] PASSED (12 tests)
 tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_metadata_file_validity PASSED
 
-======================== 66 passed, 1 skipped in 15.03s ========================
+======================= 71 passed, 1 skipped in 13.24s =======================
 ```
 
 ---

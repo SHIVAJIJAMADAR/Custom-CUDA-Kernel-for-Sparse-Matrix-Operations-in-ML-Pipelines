@@ -16,40 +16,42 @@
 | **CSR Properties & Row-Length Stats** | 5 | 5 | 0 | 0 | ✅ Verified on CPU |
 | **Masked Conversion & Shape Checks** | 2 | 2 | 0 | 0 | ✅ Verified on CPU |
 | **Masked Correctness Oracle ($A_{\text{masked}} \times X$)**| 5 | 5 | 0 | 0 | ✅ Verified on CPU |
+| **Synthetic Magnitude Pruning Unit Tests** | 5 | 5 | 0 | 0 | ✅ Verified on CPU |
 | **BERT Weight Properties & Verification** | 3 | 3 | 0 | 0 | ✅ Verified on CPU |
 | **BERT Deterministic Magnitude Masks** | 10 | 10 | 0 | 0 | ✅ Verified on CPU |
 | **BERT Workload Correctness Reference** | 13 | 13 | 0 | 0 | ✅ Verified on CPU |
 | **CUDA Kernel Execution (`test_cuda_kernel.py`)** | 1 | 0 | 1 | 0 | ⏸️ Correctly Skipped (No CUDA GPU) |
-| **TOTAL** | **67** | **66** | **1** | **0** | **66 Passed, 1 Skipped** |
+| **TOTAL** | **72** | **71** | **1** | **0** | **71 Passed, 1 Skipped** |
 
 > [!IMPORTANT]
 > **No GPU performance claims have been recorded yet.**  
-> While the mathematical logic, format converters, real BERT weight extraction, deterministic pruning masks, and CPU references are thoroughly verified (66 tests passing), no CUDA kernels have run on the physical GPU due to missing CUDA Toolkit / MSVC prerequisites. All benchmark numbers from the mid-semester presentation were preliminary targets, not measured GPU empirical data.
+> While the mathematical logic, format converters, real BERT weight extraction, deterministic pruning masks, unit tie-breaking tests, and CPU references are thoroughly verified (71 tests passing), no CUDA kernels have run on the physical GPU due to missing CUDA Toolkit / MSVC prerequisites. All benchmark numbers from the mid-semester presentation were preliminary targets, not measured GPU empirical data.
 
 ---
 
-## 2. BERT-Base Workload Empirical Ledger (Phase 2A)
+## 2. BERT-Base Workload Empirical Ledger (Phase 2A & 2B)
 
 Extracted from `google-bert/bert-base-uncased` (revision `86b5e0934494bd15c9632b12f734a8a67f723594`):
-- Layer: `bert.encoder.layer.0.intermediate.dense.weight` ($3072 \times 768$, `torch.float32`, $9.00\text{ MB}$)
+- Layer: `bert.encoder.layer.0.intermediate.dense.weight` ($3072 \times 768$, `torch.float32`, $9.00\text{ MB}$, $2,359,296$ elements)
 - Native Sparsity: **0.0000%** (exact zeros: 0 / 2,359,296)
+- Block Sparsity Definition: Percentage of non-overlapping blocks containing exactly zero nonzeros.
 
-| Target Sparsity | Actual Nonzeros ($NNZ$) | Magnitude Threshold ($\tau$) | Row Nonzeros (Min / Max) | Mean Row Nonzeros | Empty Rows | Row CV | Block Sparsity ($8\times 8$) | Block Sparsity ($32\times 32$) |
+| Target Sparsity | Actual Nonzeros ($NNZ$) | Magnitude Threshold ($\tau$) | Row Nonzeros (Min / Max) | Row Nonzeros (Mean ± Std) | Empty Rows | Row CV | Block Sparsity ($8\times 8$) | Block Sparsity ($32\times 32$) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **0% (Original)**| 2,359,296 | 0.000000 | 768 / 768 | 768.0 | 0 | 0.0000 | 0.00% | 0.00% |
-| **50%** | 1,179,648 | 0.024712 | 89 / 576 | 384.0 | 0 | 0.1158 | 0.00% | 0.00% |
-| **60%** | 943,718 | 0.030904 | 47 / 538 | 307.2 | 0 | 0.1514 | 0.00% | 0.00% |
-| **70%** | 707,789 | 0.038196 | 21 / 501 | 230.4 | 0 | 0.2028 | 0.00% | 0.00% |
-| **80%** | 471,859 | 0.047479 | 6 / 444 | 153.6 | 0 | 0.2838 | 0.01% | 0.00% |
-| **85%** | 353,894 | 0.053516 | 2 / 401 | 115.3 | 0 | 0.3486 | 0.16% | 0.00% |
-| **90%** | 235,930 | 0.061454 | 0 / 355 | 76.8 | 2 | 0.4500 | 1.83% | 0.00% |
-| **95%** | 117,965 | 0.073820 | 0 / 295 | 38.4 | 13 | 0.6472 | 11.23% | 0.00% |
-| **98%** | 47,186 | 0.088522 | 0 / 226 | 15.4 | 57 | 0.6784 | 28.46% | 0.00% |
-| **99%** | 23,593 | 0.098763 | 0 / 180 | 7.7 | 172 | 0.9282 | 53.31% | 0.00% |
+| **0% (Original)**| 2,359,296 | 0.000000 | 768 / 768 | 768.0 ± 0.0 | 0 | 0.0000 | 0.00% | 0.00% |
+| **50%** | 1,179,648 | 0.024712 | 89 / 576 | 384.0 ± 44.5 | 0 | 0.1158 | 0.00% | 0.00% |
+| **60%** | 943,718 | 0.030904 | 47 / 538 | 307.2 ± 46.5 | 0 | 0.1514 | 0.00% | 0.00% |
+| **70%** | 707,789 | 0.038196 | 30 / 492 | 230.4 ± 45.3 | 0 | 0.1965 | 0.00% | 0.00% |
+| **80%** | 471,859 | 0.047479 | 7 / 433 | 153.6 ± 39.3 | 0 | 0.2556 | 0.00% | 0.00% |
+| **85%** | 353,894 | 0.053516 | 4 / 382 | 115.2 ± 34.2 | 0 | 0.2970 | 0.01% | 0.00% |
+| **90%** | 235,930 | 0.061454 | 2 / 338 | 76.8 ± 27.5 | 0 | 0.3581 | 0.15% | 0.00% |
+| **95%** | 117,965 | 0.073820 | 0 / 276 | 38.4 ± 18.1 | 5 | 0.4709 | 4.20% | 0.00% |
+| **98%** | 47,186 | 0.088522 | 0 / 226 | 15.4 ± 10.4 | 57 | 0.6784 | 28.46% | 0.00% |
+| **99%** | 23,593 | 0.098763 | 0 / 180 | 7.7 ± 7.1 | 172 | 0.9282 | 53.31% | 0.00% |
 
 ---
 
-## 2. Verified CPU Test Results (Empirical Log)
+## 3. Verified CPU Test Results (Empirical Log)
 
 The complete CPU test suite was executed against Python 3.13 on October 21, 2026:
 

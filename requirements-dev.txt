@@ -1,3 +1,10 @@
+# Core Development & Test Suite Dependencies
 torch
 pytest
 pyyaml
+
+# Optional Workload Acquisition Dependencies
+# Required only when running 'patterns/prepare_bert_workload.py'
+# to download and extract BERT-Base checkpoints from Hugging Face:
+huggingface_hub>=0.20.0
+safetensors>=0.4.0

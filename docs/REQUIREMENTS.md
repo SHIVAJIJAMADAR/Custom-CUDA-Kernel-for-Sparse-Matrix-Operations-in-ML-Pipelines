@@ -55,14 +55,15 @@ Performance and correctness must be evaluated across systematic sweeps of sparsi
   - Evaluate `cusparseSpMM` in BSR format as applicable additional work when block sparsity warrants it, not as a mandatory replacement for cuSPARSE CSR.
 
 ### R4. Custom Kernel V1: CSR Row-per-Warp SpMM (Mandatory Baseline 3 / Core Kernel)
-- **R4.1 Thread-to-Data Mapping:**
-  - Assign exactly one 32-thread CUDA warp per output row of matrix $A$ (or multiple rows per threadblock).
-  - Threads within a warp cooperate to process the non-zero elements of row $i$ in parallel across output column dimension $N$.
-- **R4.2 Intra-Warp Reduction:**
-  - Use warp-synchronous shuffle intrinsics (`__shfl_down_sync`) to reduce partial products without shared memory bank conflicts.
-- **R4.3 Memory Coalescing:**
-  - Ensure coalesced global memory reads across columns of dense input matrix $X$.
-  - Implement vectorized loads (`float4` / `half2`) where alignment allows.
+- **R4.1 Thread-to-Data Mapping Architecture:**
+  - Assign CUDA warps (32 threads) to process rows of sparse matrix $A$ across column chunks of dense matrix $X$.
+  - Reconciled Execution Strategy: The kernel adopts **Column-Coalesced SpMM (Mapping B)** as the primary design for $N \ge 32$: the 32 lanes of the warp are assigned to 32 contiguous columns of $X$, traversing the non-zero elements of row $i$ in lockstep.
+- **R4.2 Memory Coalescing & Access Tradeoffs:**
+  - In Mapping B, adjacent warp lanes read 32 consecutive columns of row $k$ in row-major $X$, achieving 100% coalesced 128-byte global memory transactions per non-zero iteration.
+  - In contrast, a Nonzero-Parallel mapping (Mapping A, SpMV-style) assigns lanes to different non-zeros of row $i$; while CSR reads are coalesced, reads from dense matrix $X$ become scattered gathers across different rows, requiring `__shfl_down_sync` reduction for each output element.
+- **R4.3 Accumulation & Reduction Semantics:**
+  - Under Mapping B, each thread directly maintains a private accumulator for its assigned output column across all non-zeros of row $i$, writing directly to $Y[i, j]$ without intra-warp shuffle reduction.
+  - If a sub-warp tiling (e.g., $N=16$) or nonzero-parallel decomposition is evaluated, `__shfl_down_sync` tree reduction is used only when lanes compute partial sums for the same output coordinate.
 
 ### R5. Custom Kernel V2: Block-Sparse SpMM
 - **R5.1 Tiling & Shared Memory:**

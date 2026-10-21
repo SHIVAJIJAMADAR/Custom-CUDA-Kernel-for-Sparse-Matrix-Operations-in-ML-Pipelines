@@ -28,7 +28,7 @@ An audit conducted on October 21, 2026, confirmed the following local hardware a
 ## 2. Step-by-Step Remediation Plan
 
 > [!CAUTION]
-> In accordance with Phase 1 strict scope controls, **system-wide software installations are not performed automatically**. Follow the precise manual instructions below to unblock GPU development.
+> In accordance with project integrity standards, **system-wide software installations and global Python environment modifications are not performed automatically**. Follow the precise manual instructions below to unblock physical GPU development.
 
 ### Step 1: Install Visual Studio 2022 C++ Build Tools
 The CUDA compiler `nvcc` requires Microsoft Visual C++ (`cl.exe`) to compile host code and link extensions.
@@ -54,7 +54,7 @@ cl.exe
 ---
 
 ### Step 2: Install NVIDIA CUDA Toolkit 12.4 Update 1
-NVIDIA Driver `566.07` supports CUDA up to version 12.7. We recommend **CUDA 12.4 Update 1** because it aligns with verified PyTorch binary wheels available for Python 3.13.
+NVIDIA Driver `566.07` supports CUDA up to version 12.7. We recommend **CUDA 12.4 Update 1** because it aligns with verified PyTorch binary wheels available for Python 3.13 (`torch==2.6.0+cu124`). *(Alternatively, CUDA Toolkit 12.6 with `torch==2.6.0+cu126` is also verified compatible).*
 
 1. Download the CUDA 12.4 Update 1 network or local installer for Windows 11:  
    🔗 [https://developer.nvidia.com/cuda-12-4-1-download-archive](https://developer.nvidia.com/cuda-12-4-1-download-archive)
@@ -95,42 +95,51 @@ if ($oldPath -notlike "*$newEntries*") {
 
 ---
 
-### Step 4: Install CUDA-Enabled PyTorch for Python 3.13
-The existing Python installation (`Python 3.13.0`) currently has `torch 2.10.0+cpu`. PyTorch publishes official pre-built Windows CUDA 12.4 wheels for Python 3.13 (`cp313`): `torch==2.6.0+cu124`.
+### Step 4: Create Isolated Virtual Environment & Install CUDA-Enabled PyTorch
+To preserve the global Python environment without modifying machine-wide packages:
 
-**Installation Command:**
-```powershell
-pip uninstall -y torch torchvision
-pip install torch==2.6.0+cu124 torchvision --extra-index-url https://download.pytorch.org/whl/cu124
-```
+1. **Create and Activate a Dedicated Virtual Environment:**
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   pip install --upgrade pip
+   ```
 
-**Verification Command:**
-```powershell
-python -c "import torch; print('PyTorch Version:', torch.__version__); print('CUDA Available:', torch.cuda.is_available()); print('Device Name:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'); print('Compute Capability:', torch.cuda.get_device_capability(0) if torch.cuda.is_available() else 'N/A')"
-```
-*Expected Output:*
-```
-PyTorch Version: 2.6.0+cu124
-CUDA Available: True
-Device Name: NVIDIA GeForce RTX 3050 Laptop GPU
-Compute Capability: (8, 6)
-```
+2. **Install Pre-built CUDA 12.4 PyTorch Wheel (`cp313-win_amd64`):**
+   ```powershell
+   pip install torch==2.6.0+cu124 torchvision --extra-index-url https://download.pytorch.org/whl/cu124
+   pip install -r requirements-dev.txt
+   ```
+   *(Note: If CUDA 12.6 is selected in Step 2, run `pip install torch==2.6.0+cu126 torchvision --extra-index-url https://download.pytorch.org/whl/cu126` instead).*
+
+3. **Verify PyTorch GPU Initialization:**
+   ```powershell
+   python -c "import torch; print('PyTorch Version:', torch.__version__); print('CUDA Available:', torch.cuda.is_available()); print('Device Name:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'); print('Compute Capability:', torch.cuda.get_device_capability(0) if torch.cuda.is_available() else 'N/A')"
+   ```
+   *Expected Output:*
+   ```
+   PyTorch Version: 2.6.0+cu124
+   CUDA Available: True
+   Device Name: NVIDIA GeForce RTX 3050 Laptop GPU
+   Compute Capability: (8, 6)
+   ```
 
 ---
 
-### Step 5: Verify cuBLAS & cuSPARSE GPU Acceleration
+### Step 5: Verify cuBLAS & GPU Dense GEMM Acceleration
 Verify that standard PyTorch GPU tensor math and dense operations execute on the RTX 3050 without error:
 
 ```powershell
-python -c "import torch; a = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); b = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); c = torch.matmul(a, b); print('GEMM Check Succeeded! Result shape:', c.shape)"
+python -c "import torch; a = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); b = torch.randn(1024, 1024, device='cuda', dtype=torch.float16); c = torch.matmul(a, b); print('Dense GEMM Succeeded! Result shape:', c.shape)"
 ```
 
 ---
 
-### Step 6: Build the PyTorch C++/CUDA Extension
-Once MSVC and nvcc are active, build the C++/CUDA extension module:
+### Step 6: Build the PyTorch C++/CUDA Extension in Developer Shell
+When compiling custom CUDA extensions via PyTorch's `CUDAExtension`, execute within the MSVC x64 developer environment so `cl.exe` is in PATH:
 
 ```powershell
+& "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 python python/build_extension.py
 ```
 *Verification:* Inspect generated `.pyd` module in `csrc/` or site-packages.
@@ -142,7 +151,7 @@ Run the test suite with CUDA tests unblocked:
 ```powershell
 python -m pytest tests/ -v
 ```
-*Expected Output:* All 41 tests passing (including `test_cuda_kernel.py`).
+*Expected Output:* All 72 tests passing (including `test_cuda_kernel.py`).
 
 ---
 
