@@ -31,11 +31,14 @@
 
 | Task / Item | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- | :--- |
-| **Real Target Workload Selection** | R1.1 | `[UNRESOLVED PROPOSAL]` | 3 candidate architectures proposed (LLaMA-3.2, BERT-base, ViT); awaiting weights/approval. |
+| **Real Target Workload Selection** | R1.1 | `[COMPLETE & VERIFIED]` | BERT-Base `bert.encoder.layer.0.intermediate.dense.weight` [3072, 768] extracted from rev `86b5e093`. |
+| **Workload Sparsity Characterization** | R1.1 | `[COMPLETE & VERIFIED]` | Confirmed 0.00% native sparsity; full block and row statistics in `docs/WORKLOAD_CHARACTERIZATION.md`. |
+| **Deterministic Magnitude Mask Generation** | R1.1 | `[COMPLETE & VERIFIED]` | Official sweep (50%–99%) generated via `patterns/prepare_bert_workload.py`; metadata saved in `results/raw/`. |
+| **Workload Unit Tests & Oracle Validation** | R7.1 | `[COMPLETE & VERIFIED]` | 26 unit tests passing in `tests/test_workload.py` ($A_{\text{masked}} \times X$ reference). |
 | **Workload Placeholder Configuration** | R1.1 | `[COMPLETE & VERIFIED]` | `configs/demo_config.yaml` explicitly marked as synthetic example. |
 | **Sparsity Characterization Script** | R1.2 | `[COMPLETE & VERIFIED]` | `patterns/analyze_sparsity.py` implements density, skew, & block analysis. |
 | **Row-Length Statistics & Distribution**| R1.2 | `[COMPLETE & VERIFIED]` | Mean, std, skewness, min, max, median implemented and tested. |
-| **Format Recommendation Logic** | R1.3 | `[COMPLETE & VERIFIED]` | Pattern classification and format advisory implemented. |
+| **Format Recommendation Logic** | R1.3 | `[COMPLETE & VERIFIED]` | Pattern classification and format advisory implemented (CSR recommended). |
 
 ---
 

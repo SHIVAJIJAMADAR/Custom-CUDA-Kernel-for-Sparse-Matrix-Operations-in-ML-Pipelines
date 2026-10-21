@@ -2,7 +2,7 @@
 
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
 [![CUDA Architecture](https://img.shields.io/badge/CUDA%20Compute-8.6%20(Ampere)-green.svg)](https://developer.nvidia.com/cuda-gpus)
-[![Tests Passing](https://img.shields.io/badge/tests-40%20passed%2C%201%20skipped-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-66%20passed%2C%201%20skipped-brightgreen.svg)]()
 
 Custom CUDA kernels for Sparse Matrix-Matrix Multiplication (SpMM) optimized for structured and unstructured sparsity patterns arising in deep learning inference pipelines. Evaluated rigorously against industry-standard baselines (**cuBLAS dense GEMM** and **cuSPARSE CSR SpMM**) on the NVIDIA Ampere architecture.
 
@@ -36,12 +36,12 @@ In modern deep learning architectures (e.g., Transformers, Large Language Models
 | Milestone | Component | Status | Description |
 | :--- | :--- | :--- | :--- |
 | **Foundation** | Git Repository & Layout | ✅ **Complete & Verified** | Synchronized with GitHub remote; target layout established. |
+| **Target Workload** | Real Model Weight Matrix | ✅ **Acquired & Profiled (Phase 2A)** | BERT-Base [3072, 768] extracted, 0% native sparsity; 50%–99% sweep in `docs/WORKLOAD_CHARACTERIZATION.md`. |
 | **Formats** | CSR Converter & Block-Sparse | ✅ **Complete & Verified** | Bidirectional converters, row-length analysis, and 2-of-8 packing. |
-| **Correctness** | Masked-Dense Oracle | ✅ **Complete & Verified** | Unit tests passing on CPU (40 passed, 1 skipped). |
+| **Correctness** | Masked-Dense Oracle | ✅ **Complete & Verified** | 66 unit tests passing on CPU (66 passed, 1 skipped). |
 | **Sparsity Analysis** | Workload Profiling Tool | ✅ **Complete & Verified** | Density, block occupancy, skew metrics in `patterns/analyze_sparsity.py`. |
 | **Custom Kernel V0** | Preserved Block-Sparse Kernel | ⚠️ **Implemented, Unverified** | Preserved from mid-semester prototype; unverified on GPU. |
 | **Custom Kernel V1** | CSR Row-per-Warp SpMM | 📐 **Designed (Phase 2)** | Full thread-to-data mapping specified; execution gated on environment. |
-| **Target Workload** | Real Model Weight Matrix | ⏳ **Unresolved Proposal** | 3 candidate layers proposed; awaiting selection and weights. |
 | **Baselines** | cuBLAS & cuSPARSE Harvesters | ⚠️ **Implemented, Unverified** | Benchmarking harnesses written; execution blocked on GPU runtime. |
 | **GPU Execution** | Kernel Compilation & Timing | 🔴 **Readiness Gate Blocked** | Blocked on CUDA Toolkit 12.x and MSVC C++ Build Tools. |
 
@@ -133,10 +133,19 @@ tests/test_formats.py::TestRowLengths::test_empty_matrix_stats PASSED
 tests/test_formats.py::TestMaskedConversion::test_masked_csr_matches_dense_masked PASSED
 tests/test_formats.py::TestMaskedConversion::test_shape_mismatch_raises PASSED
 tests/test_formats.py::TestCorrectnessOracle::test_csr_matmul_matches_dense_oracle[...] PASSED (5 tests)
+tests/test_formats.py::TestCorrectnessOracle::test_threshold_based_sparsity PASSED
 tests/test_packer.py::test_pack_unpack_has_expected_structure PASSED
 tests/test_packer.py::test_top2_selection_is_by_block_norm PASSED
+tests/test_workload.py::TestBERTWeightProperties::test_tensor_shape_and_dtype PASSED
+tests/test_workload.py::TestBERTWeightProperties::test_tensor_finite_and_statistics PASSED
+tests/test_workload.py::TestBERTWeightProperties::test_native_sparsity_is_zero PASSED
+tests/test_workload.py::TestBERTDeterministicMasks::test_mask_determinism_and_reproducibility[...] PASSED (5 tests)
+tests/test_workload.py::TestBERTDeterministicMasks::test_retained_and_pruned_weights[...] PASSED (4 tests)
+tests/test_workload.py::TestBERTDeterministicMasks::test_empty_rows_at_high_sparsity PASSED
+tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_csr_matches_dense_reference[...] PASSED (12 tests)
+tests/test_workload.py::TestBERTWorkloadCorrectnessReference::test_metadata_file_validity PASSED
 
-======================== 40 passed, 1 skipped in 3.66s ========================
+======================== 66 passed, 1 skipped in 15.03s ========================
 ```
 
 ---

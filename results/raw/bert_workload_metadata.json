@@ -1,0 +1,752 @@
+{
+  "metadata_version": "1.0.0",
+  "generated_at_utc": "2026-10-21T08:01:37.819690+00:00",
+  "model": {
+    "model_id": "google-bert/bert-base-uncased",
+    "pinned_revision": "86b5e0934494bd15c9632b12f734a8a67f723594",
+    "license": "Apache-2.0",
+    "framework": "PyTorch / safetensors"
+  },
+  "target_layer": {
+    "tensor_key": "bert.encoder.layer.0.intermediate.dense.weight",
+    "shape": {
+      "M": 3072,
+      "K": 768
+    },
+    "dtype": "torch.float32",
+    "element_count": 2359296,
+    "memory_footprint_bytes": 9437184,
+    "memory_footprint_mb": 9.0,
+    "operation": "Y[3072, N] = A[3072, 768] @ X[768, N]",
+    "mathematical_orientation": {
+      "A_sparse": [
+        3072,
+        768
+      ],
+      "X_dense": [
+        768,
+        "N"
+      ],
+      "Y_out": [
+        3072,
+        "N"
+      ]
+    }
+  },
+  "original_unpruned_matrix": {
+    "exact_zero_count": 0,
+    "native_sparsity_percent": 0.0,
+    "is_natively_sparse": false,
+    "min_val": -0.2978421151638031,
+    "max_val": 0.32221561670303345,
+    "mean_val": -3.0438815883826464e-05,
+    "std_val": 0.0374215729534626,
+    "row_length_stats": {
+      "min": 768,
+      "max": 768,
+      "mean": 768.0,
+      "median": 768.0,
+      "std": 0.0,
+      "total_nnz": 2359296,
+      "num_empty_rows": 0
+    },
+    "block_analysis": {
+      "8": {
+        "block_size": 8,
+        "row_blocks": 384,
+        "col_blocks": 96,
+        "total_blocks": 36864,
+        "nonempty_blocks": 36864,
+        "block_density": 1.0,
+        "block_sparsity": 0.0,
+        "mean_fill_per_nonempty_block": 64.0,
+        "max_fill_per_block": 64,
+        "max_possible_fill": 64
+      },
+      "16": {
+        "block_size": 16,
+        "row_blocks": 192,
+        "col_blocks": 48,
+        "total_blocks": 9216,
+        "nonempty_blocks": 9216,
+        "block_density": 1.0,
+        "block_sparsity": 0.0,
+        "mean_fill_per_nonempty_block": 256.0,
+        "max_fill_per_block": 256,
+        "max_possible_fill": 256
+      },
+      "32": {
+        "block_size": 32,
+        "row_blocks": 96,
+        "col_blocks": 24,
+        "total_blocks": 2304,
+        "nonempty_blocks": 2304,
+        "block_density": 1.0,
+        "block_sparsity": 0.0,
+        "mean_fill_per_nonempty_block": 1024.0,
+        "max_fill_per_block": 1024,
+        "max_possible_fill": 1024
+      },
+      "64": {
+        "block_size": 64,
+        "row_blocks": 48,
+        "col_blocks": 12,
+        "total_blocks": 576,
+        "nonempty_blocks": 576,
+        "block_density": 1.0,
+        "block_sparsity": 0.0,
+        "mean_fill_per_nonempty_block": 4096.0,
+        "max_fill_per_block": 4096,
+        "max_possible_fill": 4096
+      }
+    }
+  },
+  "pruning_methodology": {
+    "method": "deterministic_global_magnitude_pruning",
+    "retention_policy": "Retain elements with |A_ij| >= threshold",
+    "tie_breaking": "Deterministic by flattened tensor index",
+    "official_sweep_levels": [
+      "50%",
+      "60%",
+      "70%",
+      "80%",
+      "85%",
+      "90%",
+      "95%",
+      "98%",
+      "99%"
+    ]
+  },
+  "experimental_sparsity_sweep": [
+    {
+      "target_sparsity": 0.5,
+      "actual_sparsity": 0.5,
+      "retained_nonzero_count": 1179648,
+      "pruned_zero_count": 1179648,
+      "magnitude_threshold": 0.02471175789833069,
+      "mask_file": "data\\masks\\mask_sp50.pt",
+      "row_length_stats": {
+        "min": 89,
+        "max": 576,
+        "mean": 384.0,
+        "median": 393.0,
+        "std": 44.46725082397461,
+        "total_nnz": 1179648,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.1158,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36864,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 32.0,
+          "max_fill_per_block": 49,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 128.0,
+          "max_fill_per_block": 163,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 512.0,
+          "max_fill_per_block": 579,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 2048.0,
+          "max_fill_per_block": 2177,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 default choice for moderate sparsity"
+    },
+    {
+      "target_sparsity": 0.6,
+      "actual_sparsity": 0.6,
+      "retained_nonzero_count": 943718,
+      "pruned_zero_count": 1415578,
+      "magnitude_threshold": 0.03090352565050125,
+      "mask_file": "data\\masks\\mask_sp60.pt",
+      "row_length_stats": {
+        "min": 47,
+        "max": 538,
+        "mean": 307.1998596191406,
+        "median": 317.0,
+        "std": 46.52098846435547,
+        "total_nnz": 943718,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.1514,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36864,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 25.6,
+          "max_fill_per_block": 43,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 102.4,
+          "max_fill_per_block": 137,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 409.6,
+          "max_fill_per_block": 476,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 1638.4,
+          "max_fill_per_block": 1761,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.7,
+      "actual_sparsity": 0.7,
+      "retained_nonzero_count": 707789,
+      "pruned_zero_count": 1651507,
+      "magnitude_threshold": 0.038195643573999405,
+      "mask_file": "data\\masks\\mask_sp70.pt",
+      "row_length_stats": {
+        "min": 30,
+        "max": 492,
+        "mean": 230.4000701904297,
+        "median": 239.0,
+        "std": 45.26776885986328,
+        "total_nnz": 707789,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.1965,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36864,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 19.2,
+          "max_fill_per_block": 39,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 76.8,
+          "max_fill_per_block": 109,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 307.2,
+          "max_fill_per_block": 376,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 1228.8,
+          "max_fill_per_block": 1349,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.8,
+      "actual_sparsity": 0.8,
+      "retained_nonzero_count": 471859,
+      "pruned_zero_count": 1887437,
+      "magnitude_threshold": 0.04747947305440903,
+      "mask_file": "data\\masks\\mask_sp80.pt",
+      "row_length_stats": {
+        "min": 7,
+        "max": 433,
+        "mean": 153.5999298095703,
+        "median": 160.0,
+        "std": 39.25754165649414,
+        "total_nnz": 471859,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.2556,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36864,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 12.8,
+          "max_fill_per_block": 28,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 51.2,
+          "max_fill_per_block": 79,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 204.8,
+          "max_fill_per_block": 255,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 819.2,
+          "max_fill_per_block": 914,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.85,
+      "actual_sparsity": 0.85,
+      "retained_nonzero_count": 353894,
+      "pruned_zero_count": 2005402,
+      "magnitude_threshold": 0.05351599305868149,
+      "mask_file": "data\\masks\\mask_sp85.pt",
+      "row_length_stats": {
+        "min": 4,
+        "max": 382,
+        "mean": 115.19986724853516,
+        "median": 120.0,
+        "std": 34.216007232666016,
+        "total_nnz": 353894,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.297,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36860,
+          "block_density": 0.9999,
+          "block_sparsity": 0.0001,
+          "mean_fill_per_nonempty_block": 9.6,
+          "max_fill_per_block": 23,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 38.4,
+          "max_fill_per_block": 65,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 153.6,
+          "max_fill_per_block": 199,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 614.4,
+          "max_fill_per_block": 713,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.9,
+      "actual_sparsity": 0.9,
+      "retained_nonzero_count": 235930,
+      "pruned_zero_count": 2123366,
+      "magnitude_threshold": 0.06145370006561279,
+      "mask_file": "data\\masks\\mask_sp90.pt",
+      "row_length_stats": {
+        "min": 2,
+        "max": 338,
+        "mean": 76.80013275146484,
+        "median": 79.0,
+        "std": 27.501773834228516,
+        "total_nnz": 235930,
+        "num_empty_rows": 0
+      },
+      "row_length_cv": 0.3581,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 36807,
+          "block_density": 0.9985,
+          "block_sparsity": 0.0015,
+          "mean_fill_per_nonempty_block": 6.4,
+          "max_fill_per_block": 20,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 25.6,
+          "max_fill_per_block": 52,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 102.4,
+          "max_fill_per_block": 139,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 409.6,
+          "max_fill_per_block": 489,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "moderately sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.95,
+      "actual_sparsity": 0.95,
+      "retained_nonzero_count": 117965,
+      "pruned_zero_count": 2241331,
+      "magnitude_threshold": 0.07382011413574219,
+      "mask_file": "data\\masks\\mask_sp95.pt",
+      "row_length_stats": {
+        "min": 0,
+        "max": 276,
+        "mean": 38.40006637573242,
+        "median": 39.0,
+        "std": 18.081504821777344,
+        "total_nnz": 117965,
+        "num_empty_rows": 5
+      },
+      "row_length_cv": 0.4709,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 35314,
+          "block_density": 0.958,
+          "block_sparsity": 0.042,
+          "mean_fill_per_nonempty_block": 3.3,
+          "max_fill_per_block": 13,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9216,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 12.8,
+          "max_fill_per_block": 30,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 51.2,
+          "max_fill_per_block": 85,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 204.8,
+          "max_fill_per_block": 281,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "highly sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.98,
+      "actual_sparsity": 0.98,
+      "retained_nonzero_count": 47186,
+      "pruned_zero_count": 2312110,
+      "magnitude_threshold": 0.08852151781320572,
+      "mask_file": "data\\masks\\mask_sp98.pt",
+      "row_length_stats": {
+        "min": 0,
+        "max": 226,
+        "mean": 15.360026359558105,
+        "median": 15.0,
+        "std": 10.420744895935059,
+        "total_nnz": 47186,
+        "num_empty_rows": 57
+      },
+      "row_length_cv": 0.6784,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 26372,
+          "block_density": 0.7154,
+          "block_sparsity": 0.2846,
+          "mean_fill_per_nonempty_block": 1.8,
+          "max_fill_per_block": 8,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 9143,
+          "block_density": 0.9921,
+          "block_sparsity": 0.0079,
+          "mean_fill_per_nonempty_block": 5.2,
+          "max_fill_per_block": 18,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 20.5,
+          "max_fill_per_block": 46,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 81.9,
+          "max_fill_per_block": 117,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "highly sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    },
+    {
+      "target_sparsity": 0.99,
+      "actual_sparsity": 0.99,
+      "retained_nonzero_count": 23593,
+      "pruned_zero_count": 2335703,
+      "magnitude_threshold": 0.09876270592212677,
+      "mask_file": "data\\masks\\mask_sp99.pt",
+      "row_length_stats": {
+        "min": 0,
+        "max": 180,
+        "mean": 7.680013179779053,
+        "median": 7.0,
+        "std": 7.128546237945557,
+        "total_nnz": 23593,
+        "num_empty_rows": 172
+      },
+      "row_length_cv": 0.9282,
+      "block_analysis": {
+        "8": {
+          "block_size": 8,
+          "row_blocks": 384,
+          "col_blocks": 96,
+          "total_blocks": 36864,
+          "nonempty_blocks": 17210,
+          "block_density": 0.4669,
+          "block_sparsity": 0.5331,
+          "mean_fill_per_nonempty_block": 1.4,
+          "max_fill_per_block": 6,
+          "max_possible_fill": 64
+        },
+        "16": {
+          "block_size": 16,
+          "row_blocks": 192,
+          "col_blocks": 48,
+          "total_blocks": 9216,
+          "nonempty_blocks": 8421,
+          "block_density": 0.9137,
+          "block_sparsity": 0.0863,
+          "mean_fill_per_nonempty_block": 2.8,
+          "max_fill_per_block": 13,
+          "max_possible_fill": 256
+        },
+        "32": {
+          "block_size": 32,
+          "row_blocks": 96,
+          "col_blocks": 24,
+          "total_blocks": 2304,
+          "nonempty_blocks": 2304,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 10.2,
+          "max_fill_per_block": 30,
+          "max_possible_fill": 1024
+        },
+        "64": {
+          "block_size": 64,
+          "row_blocks": 48,
+          "col_blocks": 12,
+          "total_blocks": 576,
+          "nonempty_blocks": 576,
+          "block_density": 1.0,
+          "block_sparsity": 0.0,
+          "mean_fill_per_nonempty_block": 41.0,
+          "max_fill_per_block": 68,
+          "max_possible_fill": 4096
+        }
+      },
+      "pattern_classification": "highly sparse / unstructured",
+      "suggested_format": "CSR \u2014 general-purpose sparse format suitable for unstructured sparsity"
+    }
+  ]
+}

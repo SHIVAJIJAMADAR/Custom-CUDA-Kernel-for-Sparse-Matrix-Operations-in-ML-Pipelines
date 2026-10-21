@@ -37,6 +37,8 @@ htmlcov/
 *.safetensors
 *.onnx
 *.ckpt
+data/
+cache/
 
 # Environment / Secrets / Local
 .env
