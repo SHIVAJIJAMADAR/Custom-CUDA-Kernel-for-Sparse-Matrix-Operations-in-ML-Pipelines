@@ -11,19 +11,21 @@
 
 The primary objective of Project 10 is to design, implement, optimize, and profile custom CUDA kernels for sparse matrix-matrix multiplication (SpMM) tailored to specific sparsity patterns arising in machine learning workloads (e.g., pruned transformer attention projections, feed-forward layers, or MLP weights). 
 
-The custom kernels must be benchmarked against standard industry baselines:
-1. **Dense cuBLAS GEMM** ($Y = X \times W$ or $Y = W \times X$)
+The custom kernels must be benchmarked across the **four official Project 10 comparison baselines**:
+1. **Dense cuBLAS GEMM** ($Y = A \times X$ or $Y = X \times W^T$)
 2. **cuSPARSE CSR SpMM** (`cusparseSpMM` using default and specialized algorithms)
+3. **Naive custom sparse kernel** (baseline generic sparse implementation, e.g. basic CSR row-per-warp)
+4. **Optimized custom sparse kernel** (tailored variant, e.g. shared-memory tiled, shuffle-reduced, or load-balanced)
 
-Performance and correctness must be evaluated across systematic sweeps of sparsity levels, matrix dimensions, block configurations, and row distributions.
+Performance and correctness must be evaluated across systematic sweeps of sparsity levels (**official 50%–99% range**), matrix dimensions, block configurations, and row distributions.
 
 ---
 
 ## 2. Traceable Requirements Matrix
 
 ### R1. Target Workload & Sparsity Characterization
-- **R1.1 Workload Selection (Prerequisite):** Identify at least one representative deep learning weight matrix (e.g., LLaMA / Mistral / BERT / ViT linear projection) or realistic synthetic benchmark with representative dimensions ($M, K \ge 1024$).
-- **R1.2 Sparsity Profiling:** Implement an analysis script (`patterns/analyze_sparsity.py`) computing:
+- **R1.1 Workload Selection (Mandatory Prerequisite):** Identify at least one representative deep learning weight matrix (e.g., LLaMA / Mistral / BERT / ViT linear projection) or verified pruned model layer. Synthetic matrices support controlled unit testing, debugging, and parameter sweeps, but **do not replace characterization of a real target workload**.
+- **R1.2 Sparsity Profiling (Mandatory):** Implement an analysis script (`patterns/analyze_sparsity.py`) computing:
   - Total dimensions $(M, K)$, active dtype, element count, non-zero element count ($NNZ$), and overall sparsity fraction ($\% = 1 - NNZ / (M \times K)$).
   - Block occupancy / pattern analysis across candidate block tile sizes ($8\times 8, 16\times 16, 32\times 32, 64\times 64$).
   - Row-length distribution (min, max, mean, median, standard deviation, skewness coefficient).
@@ -31,31 +33,31 @@ Performance and correctness must be evaluated across systematic sweeps of sparsi
 - **R1.3 Format Recommendation:** Automatically advise format selection (CSR vs BSR vs Blocked) based on block-density metrics.
 
 ### R2. Sparse Format Conversions & Storage
-- **R2.1 Compressed Sparse Row (CSR):**
+- **R2.1 Compressed Sparse Row (CSR - Mandatory):**
   - Implement bidirectional converter: Dense $\leftrightarrow$ CSR (`formats/csr.py`).
   - Storage structures: `values` (1D array of nonzeros), `col_indices` (1D array of column indices, `int32`), `row_ptr` (1D array of row offsets of length $M+1$, `int32`).
   - Support masked-dense to CSR extraction with automatic zero-pruning.
-- **R2.2 Block Compressed Sparse Row (BSR) & Block-Sparse:**
-  - Implement block-sparse representation for $B \times B$ non-zero sub-blocks (`formats/blocked.py`, `formats/bsr.py`).
+- **R2.2 Block-Sparse & BSR Storage (Applicable / Workload-Dependent):**
+  - Implement block-sparse representation for $B \times B$ non-zero sub-blocks (`formats/blocked.py`, `formats/bsr.py`) when block structure is present.
   - Preserve mid-semester 2-of-8 block-sparse packer/unpacker with metadata encoding.
 - **R2.3 Data Integrity & Memory Footprint:**
   - Round-trip fidelity: $Dense \to Sparse \to Dense \equiv Dense$.
   - Exact memory footprint accounting comparing dense vs sparse storage.
 
 ### R3. Industry Baselines (cuBLAS & cuSPARSE)
-- **R3.1 cuBLAS Dense GEMM:**
+- **R3.1 cuBLAS Dense GEMM (Mandatory Baseline 1):**
   - Implement standard dense matrix multiplication baseline ($Y = A \times X$).
-  - Measure execution latency using GPU CUDA events with warmup and L2 cache flushing.
-- **R3.2 cuSPARSE CSR SpMM:**
+  - Measure execution latency using GPU CUDA events with warmup. (L2 cache eviction is an explicit benchmark methodology choice to evaluate cold-cache vs warm-cache latency, not an unconditional separate deliverable).
+- **R3.2 cuSPARSE CSR SpMM (Mandatory Baseline 2):**
   - Implement `cusparseSpMM` wrapper executing CSR SpMM ($Y = \alpha \cdot A_{\text{CSR}} \cdot X_{\text{dense}} + \beta Y$).
   - Evaluate both default and non-default algorithms (`CUSPARSE_SPMM_ALG_DEFAULT`, `CUSPARSE_SPMM_CSR_ALG2`).
-- **R3.3 cuSPARSE BSR Baseline (Applicable):**
-  - Implement `cusparseSpMM` with `CUSPARSE_MATRIX_TYPE_GENERAL` in BSR format for block-sparse workloads.
+- **R3.3 cuSPARSE BSR Baseline (Applicable Additional Work):**
+  - Evaluate `cusparseSpMM` in BSR format as applicable additional work when block sparsity warrants it, not as a mandatory replacement for cuSPARSE CSR.
 
-### R4. Custom Kernel V1: CSR Row-per-Warp SpMM
+### R4. Custom Kernel V1: CSR Row-per-Warp SpMM (Mandatory Baseline 3 / Core Kernel)
 - **R4.1 Thread-to-Data Mapping:**
   - Assign exactly one 32-thread CUDA warp per output row of matrix $A$ (or multiple rows per threadblock).
-  - Threads within a warp cooperate to process the non-zero elements of row $i$ in parallel.
+  - Threads within a warp cooperate to process the non-zero elements of row $i$ in parallel across output column dimension $N$.
 - **R4.2 Intra-Warp Reduction:**
   - Use warp-synchronous shuffle intrinsics (`__shfl_down_sync`) to reduce partial products without shared memory bank conflicts.
 - **R4.3 Memory Coalescing:**
@@ -88,10 +90,10 @@ Performance and correctness must be evaluated across systematic sweeps of sparsi
   - 100% sparse (all zeros), 0% sparse (all ones), single non-zero, extreme aspect ratios ($M \ll K$ or $M \gg K$).
 
 ### R8. Comprehensive Evaluation Matrix
-- **R8.1 Systematic Parameter Sweeps:**
-  - **Sparsity Levels:** $50\%, 60\%, 70\%, 80\%, 85\%, 90\%, 95\%, 98\%$.
+- **R8.1 Systematic Parameter Sweeps (Mandatory):**
+  - **Sparsity Levels:** $50\%, 60\%, 70\%, 80\%, 85\%, 90\%, 95\%, 98\%, 99\%$ (official Project 10 range: 50%–99%).
   - **Matrix Dimensions:** $M, K \in \{512, 1024, 2048, 4096\}$, $N \in \{32, 64, 128, 256, 512\}$.
-  - **Block Sizes:** $8\times 8, 16\times 16, 32\times 32$ for block-sparse kernels.
+  - **Block Sizes:** $8\times 8, 16\times 16, 32\times 32$ for block-sparse kernels (when applicable).
   - **Row Skewness:** Uniform vs Zipfian/power-law distribution of row non-zero counts.
   - **Data Types:** FP32 and FP16.
 - **R8.2 End-to-End Layer Benchmark:**

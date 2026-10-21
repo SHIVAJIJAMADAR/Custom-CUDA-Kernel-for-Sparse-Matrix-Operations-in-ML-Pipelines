@@ -31,7 +31,7 @@
 
 | Task / Item | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- | :--- |
-| **Real Target Workload Selection** | R1.1 | `[BLOCKED]` | Blocked pending model selection (LLaMA/BERT/ViT projection). |
+| **Real Target Workload Selection** | R1.1 | `[UNRESOLVED PROPOSAL]` | 3 candidate architectures proposed (LLaMA-3.2, BERT-base, ViT); awaiting weights/approval. |
 | **Workload Placeholder Configuration** | R1.1 | `[COMPLETE & VERIFIED]` | `configs/demo_config.yaml` explicitly marked as synthetic example. |
 | **Sparsity Characterization Script** | R1.2 | `[COMPLETE & VERIFIED]` | `patterns/analyze_sparsity.py` implements density, skew, & block analysis. |
 | **Row-Length Statistics & Distribution**| R1.2 | `[COMPLETE & VERIFIED]` | Mean, std, skewness, min, max, median implemented and tested. |
@@ -57,7 +57,7 @@
 | :--- | :--- | :--- | :--- |
 | **Dense PyTorch/cuBLAS Harness** | R3.1 | `[IMPLEMENTED BUT UNVERIFIED]`| `bench/benchmark_dense.py` written; blocked on CUDA PyTorch. |
 | **cuSPARSE CSR SpMM Harness** | R3.2 | `[IMPLEMENTED BUT UNVERIFIED]`| `bench/cusparse_spmm_baseline.cu` scaffolded; blocked on nvcc. |
-| **cuSPARSE BSR SpMM Harness** | R3.3 | `[NOT STARTED]` | Scheduled for Phase 3. |
+| **cuSPARSE BSR SpMM Harness** | R3.3 | `[NOT STARTED]` | Applicable additional work for block patterns; scheduled for Phase 3. |
 
 ---
 
@@ -68,8 +68,9 @@
 | **V0 Block-Sparse Kernel (Preserved)**| Legacy | `[IMPLEMENTED BUT UNVERIFIED]`| `kernels/sparse_linear_v0.cu` preserved; unverified on GPU. |
 | **V0 Kernel PyTorch Extension Build** | R10.1 | `[BLOCKED]` | `python/build_extension.py` blocked on MSVC `cl.exe` + `nvcc`. |
 | **V0 Kernel Test (`test_cuda_kernel`)**| Legacy | `[BLOCKED]` | Test skipped on CPU: `tests/test_cuda_kernel.py`. |
-| **V1 CSR Row-per-Warp Kernel** | R4 | `[NOT STARTED]` | Implementation scheduled for Phase 2. |
-| **V1 Intra-Warp Shuffle Reduction** | R4.2 | `[NOT STARTED]` | Scheduled for Phase 2. |
+| **V1 CSR Row-per-Warp Kernel Design** | R4 | `[COMPLETE & VERIFIED]` | Thread-to-data mapping & algorithm fully documented (Phase 2). |
+| **V1 CSR Kernel Implementation & Run**| R4.1 | `[BLOCKED / READINESS GATED]` | Execution strictly gated until host CUDA/MSVC toolchain is installed. |
+| **V1 Intra-Warp Shuffle Reduction** | R4.2 | `[COMPLETE & VERIFIED]` | Algorithmic shuffle reduction designed; implementation gated on environment. |
 | **V2 Block-Sparse Tiled Kernel** | R5 | `[NOT STARTED]` | Implementation scheduled for Phase 3. |
 | **V3 Load-Balanced Skewed-Row Kernel**| R6 | `[NOT STARTED]` | Implementation scheduled for Phase 4. |
 
@@ -91,8 +92,8 @@
 | Task / Item | Requirement | Status | Evidence / Notes |
 | :--- | :--- | :--- | :--- |
 | **CUDA Event Timing Protocol** | R9.1 | `[IMPLEMENTED BUT UNVERIFIED]`| Defined in `bench/benchmark_dense.py`; blocked on GPU. |
-| **L2 Cache Flush Protocol** | R9.1 | `[IMPLEMENTED BUT UNVERIFIED]`| Protocol defined in `docs/BENCHMARK_PROTOCOL.md`. |
-| **Sparsity Parameter Sweep (50%–98%)**| R8.1 | `[NOT STARTED]` | Scheduled for Phase 5. |
+| **L2 Cache Flush Protocol** | R9.1 | `[COMPLETE & VERIFIED]` | Methodology choice documented in `docs/BENCHMARK_PROTOCOL.md`. |
+| **Sparsity Parameter Sweep (50%–99%)**| R8.1 | `[NOT STARTED]` | Official 50%–99% sweep scheduled for Phase 5. |
 | **Matrix Dimension Sweep (512–4096)** | R8.1 | `[NOT STARTED]` | Scheduled for Phase 5. |
 | **Row Skewness Sweep** | R8.1 | `[NOT STARTED]` | Scheduled for Phase 5. |
 | **Break-Even Analysis & Crossover** | R9.2 | `[NOT STARTED]` | Scheduled for Phase 5. |

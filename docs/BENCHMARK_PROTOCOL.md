@@ -12,9 +12,15 @@
 To ensure scientifically valid and reproducible results, the benchmarking suite must adhere to the following principles:
 
 1. **No Unearned Claims:** A kernel cannot be reported as faster than cuBLAS or cuSPARSE without empirical, logged, reproducible timing evidence.
-2. **Identical Input Guarantee:** Baselines (cuBLAS, cuSPARSE) and custom kernels must operate on identical numerical inputs, memory layouts, and data types (FP16 or FP32).
-3. **C/C++ & CUDA Event Timing:** Host wall-clock measurements (`time.time()`) are forbidden for GPU kernel timing. All timings must use GPU hardware timer events (`cudaEventRecord`, `cudaEventElapsedTime`).
-4. **Statistical Rigor:** Benchmarks must run sufficient iterations (minimum 100 runs) with explicit warmup (minimum 30 runs) and report distribution metrics (median, mean, std dev, min, max).
+2. **Four Required Comparison Baselines:** All evaluations must compare against the four official baselines under identical mathematical inputs, shapes, dtypes, and device states:
+   - **Baseline 1:** Dense cuBLAS GEMM ($Y = A \times X$)
+   - **Baseline 2:** cuSPARSE CSR SpMM (`cusparseSpMM`)
+   - **Baseline 3:** Naive custom sparse (e.g., generic CSR row-per-warp)
+   - **Baseline 4:** Optimized custom sparse (e.g., shared-memory tiled / load-balanced / shuffle-reduced)
+   *(cuSPARSE BSR is evaluated as applicable additional work when block sparsity warrants it, not as a replacement for CSR).*
+3. **Synthetic vs Real Workloads:** Synthetic matrices (e.g. random or uniform masks) support controlled unit testing, debugging, and systematic parameter sweeps, but **do not replace empirical characterization of a real target workload**.
+4. **C/C++ & CUDA Event Timing:** Host wall-clock measurements (`time.time()`) are forbidden for GPU kernel timing. All timings must use GPU hardware timer events (`cudaEventRecord`, `cudaEventElapsedTime`).
+5. **Statistical Rigor:** Benchmarks must run sufficient iterations (minimum 100 runs) with explicit warmup (minimum 30 runs) and report distribution metrics (median, mean, std dev, min, max).
 
 ---
 
@@ -28,6 +34,7 @@ Laptop GPUs frequently fluctuate clock speeds due to dynamic power boost and the
 
 ### 2.2 Cache State Management: Warm vs. Cold Cache
 By default, repeated kernel runs operate on warm L2 cache ($2\text{ MB}$ on RTX 3050). In real inference pipelines, activations and weight matrices are frequently fetched from high-bandwidth device memory (cold cache).
+- **Methodology Choice:** Evaluating cold-cache vs warm-cache latency is an explicit benchmark methodology choice to study cache residency effects, not an unconditional separate deliverable.
 - **Warm-Cache Benchmark:** Measure steady-state throughput where matrix tiles reside in L2 cache.
 - **Cold-Cache Benchmark:** Allocate a dummy buffer equal to twice the L2 cache size ($2 \times 2\text{ MB} = 4\text{ MB}$). Between measured iterations, launch a memory-touch kernel to evict existing cache lines:
   ```python
@@ -103,7 +110,7 @@ For any sparsity $S > S^*$, the custom kernel delivers positive speedup.
 
 | Parameter | Values Explored | Justification |
 | :--- | :--- | :--- |
-| **Sparsity Level** | $50\%, 60\%, 70\%, 80\%, 85\%, 90\%, 95\%, 98\%$ | Characterize break-even threshold and scaling curves. |
+| **Sparsity Level** | $50\%, 60\%, 70\%, 80\%, 85\%, 90\%, 95\%, 98\%, 99\%$ | Characterize break-even threshold and scaling curves across official 50%–99% range. |
 | **Matrix Height ($M$)** | $512, 1024, 2048, 4096$ | Representative of transformer attention / FFN projection dimensions. |
 | **Matrix Width ($K$)** | $512, 1024, 2048, 4096$ | Matching inner dimension scaling. |
 | **Batch / Activation ($N$)**| $32, 64, 128, 256, 512$ | Token batch size in autoregressive decoding vs prompt prefill. |

@@ -89,7 +89,7 @@ The following benchmarks are scheduled for execution once the environment remedi
 | Experiment ID | Benchmark Target | Metric | Status |
 | :--- | :--- | :--- | :--- |
 | **EXP-01** | cuBLAS Dense GEMM vs Matrix Dimension ($M, K \in [512, 4096]$) | Latency ($\mu s$), TFLOPS | `[BLOCKED on CUDA]` |
-| **EXP-02** | cuSPARSE CSR SpMM vs Sparsity ($50\% \to 98\%$) | Latency ($\mu s$), Speedup vs cuBLAS | `[BLOCKED on CUDA]` |
+| **EXP-02** | cuSPARSE CSR SpMM vs Sparsity ($50\% \to 99\%$) | Latency ($\mu s$), Speedup vs cuBLAS | `[BLOCKED on CUDA]` |
 | **EXP-03** | Custom V1 (CSR Row-per-Warp) vs cuSPARSE CSR | Latency ($\mu s$), Speedup | `[BLOCKED on CUDA]` |
 | **EXP-04** | Custom V2 (Block-Sparse) vs cuSPARSE BSR | Latency ($\mu s$), Effective Bandwidth | `[BLOCKED on CUDA]` |
 | **EXP-05** | Custom V3 (Load-Balanced) on Skewed Row Distributions | Warp Divergence %, Tail Latency | `[BLOCKED on CUDA]` |

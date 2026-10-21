@@ -158,3 +158,87 @@ class SparseLinear(torch.nn.Module):
         # Calls the C++/CUDA binding
         return torch.ops.sparse_ops.csr_spmm(self.row_ptr, self.col_indices, self.values, x)
 ```
+
+---
+
+## 7. Custom Kernel V1 Detailed Design: CSR Row-per-Warp SpMM
+
+### 7.1 Mathematical Specification
+The operation to compute is sparse-matrix dense-matrix multiplication:
+
+$$Y[i, j] = \sum_{p = \text{row\_ptr}[i]}^{\text{row\_ptr}[i+1] - 1} \text{values}[p] \times X[\text{col\_indices}[p], j]$$
+
+Where:
+- $A_{\text{CSR}} \in \mathbb{R}^{M \times K}$ is stored in CSR format: `row_ptr` ($M+1$), `col_indices` ($NNZ$), `values` ($NNZ$).
+- $X \in \mathbb{R}^{K \times N}$ is dense row-major matrix: $X[k, j] = \text{data}[k \times N + j]$.
+- $Y \in \mathbb{R}^{M \times N}$ is dense row-major output matrix: $Y[i, j] = \text{data}[i \times N + j]$.
+
+### 7.2 Thread-to-Data Mapping Architecture
+To compute the full matrix product across arbitrary column width $N$ (not just SpMV where $N=1$), V1 employs a **2D Grid of 1D Threadblocks**:
+
+1. **Warp Assignment:**
+   - Each threadblock consists of $T = 128$ threads (4 warps per block).
+   - Warp index within block: $\text{warp\_id} = \text{threadIdx.x} / 32$.
+   - Lane index within warp: $\text{lane\_id} = \text{threadIdx.x} \% 32$.
+   - Global row assigned to warp: $\text{row} = \text{blockIdx.x} \times (\text{blockDim.x} / 32) + \text{warp\_id}$.
+
+2. **Column Tile Decomposition ($N_{\text{tile}}$):**
+   - Grid dimension in Y maps output column chunks: $\text{col\_start} = \text{blockIdx.y} \times N_{\text{tile}}$.
+   - $N_{\text{tile}}$ is set to $32$ (matching the warp size) or a power-of-two sub-tile (e.g. 4, 8, 16) for register-bounded processing.
+
+3. **Intra-Warp Execution & Shuffle Reduction:**
+   For a given row $i$ and column $j$:
+   - **Parallel Non-Zero Traversal:** The 32 threads of the warp loop over non-zero indices $p$ of row $i$ with stride 32:
+     $$p = \text{row\_ptr}[i] + \text{lane\_id}, \quad p < \text{row\_ptr}[i+1], \quad p \mathrel{+}= 32$$
+   - Each thread loads $k = \text{col\_indices}[p]$, $v = \text{values}[p]$, reads $X[k, j]$, and accumulates into a private FP32 register accumulator `acc`.
+   - **Warp Shuffle Reduction:** After completing the traversal of row $i$, the 32 partial sums are reduced across the warp using butterfly shuffle down intrinsics:
+     ```cpp
+     #pragma unroll
+     for (int offset = 16; offset > 0; offset /= 2) {
+         acc += __shfl_down_sync(0xffffffff, acc, offset);
+     }
+     ```
+   - **Global Memory Store:** Lane 0 holds the complete inner product $\sum_k A_{ik} X_{kj}$ and writes directly to $Y[i, j]$:
+     ```cpp
+     if (lane_id == 0 && row < M && j < N) {
+         Y[row * N + j] = static_cast<scalar_t>(acc);
+     }
+     ```
+
+4. **Multi-Column Register Unrolling (Optimized Variant):**
+   - When a warp processes $C$ columns simultaneously (e.g., $C = 4$ or $8$), each lane holds an array of $C$ accumulators: `acc[0..C-1]`.
+   - For each non-zero element $(v, k)$, the thread fetches $C$ contiguous entries from $X[k, j \dots j+C-1]$ using vectorized global loads (`float2`, `float4`, or `half2`).
+   - Intra-warp shuffle reduction is performed on each of the $C$ accumulators.
+   - Lane 0 writes the $C$ output values to $Y[i, j \dots j+C-1]$.
+
+### 7.3 Boundary Condition & Edge Case Handling
+- **Empty Rows:** If `row_ptr[i] == row_ptr[i+1]`, the non-zero loop does not execute. Lane 0 writes $0.0$ to $Y[i, j]$ (or $Y$ is pre-zeroed).
+- **Out-of-Bounds Rows:** If $\text{row} \ge M$, the warp remains idle or exits immediately.
+- **Out-of-Bounds Columns:** If $j \ge N$, accumulators are discarded before storing.
+- **Irregular Row Lengths:** Handled naturally because all threads in a warp execute the same number of loop iterations: $\lceil (\text{row\_ptr}[i+1] - \text{row\_ptr}[i]) / 32 \rceil$. Threads whose lane index exceeds the remaining non-zeros contribute $0.0$ to the shuffle reduction.
+
+### 7.4 Precision & Dtype Support
+- **FP32 Mode:** Input $A$ is FP32, $X$ is FP32, accumulation in FP32 register, output $Y$ is FP32.
+- **FP16 Mode:** Input $A$ is FP16 (`__half`), $X$ is FP16 (`__half`), accumulation in FP32 (`float`) to guard against catastrophic underflow and overflow during sum reduction, output converted back to FP16.
+
+### 7.5 Launch Configuration & Error Checking
+```cpp
+dim3 block(128, 1, 1); // 4 warps per block
+dim3 grid(
+    (M + 3) / 4,       // 4 rows per block
+    (N + N_tile - 1) / N_tile,
+    1
+);
+csr_spmm_v1_kernel<<<grid, block, 0, stream>>>(...);
+cudaError_t err = cudaGetLastError();
+if (err != cudaSuccess) {
+    throw std::runtime_error(std::string("CUDA kernel launch failed: ") + cudaGetErrorString(err));
+}
+```
+
+### 7.6 Deferred Optimizations
+To preserve clean verification gates, the following optimizations are explicitly deferred:
+- Shared memory tile caching ($X$ double-buffering) $\to$ Deferred to **V2 (Block-Sparse)**.
+- Dynamic row binning and segmented scan $\to$ Deferred to **V3 (Load-Balanced)**.
+- Ampere Tensor Core 2:4 structured MMA $\to$ Deferred to **Optional Phase (R12)**.
+
